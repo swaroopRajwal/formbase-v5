@@ -1,0 +1,8 @@
+package-lock.json
+pnpm-lock.yaml
+src/routeTree.gen.ts
+.output
+drizzle
+node_modules
+dist
+.tanstack
