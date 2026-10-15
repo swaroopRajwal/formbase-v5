@@ -1,13 +1,16 @@
 import type { ReactNode } from "react"
 import {
   Outlet,
-  createRootRoute,
   HeadContent,
   Scripts,
+  createRootRouteWithContext,
 } from "@tanstack/react-router"
 import appStyles from "../styles/app.css?url"
+import { getSessionUser } from "@lib/auth/getSessionUser"
+import { Toaster } from "@ui/toast"
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext()({
+  beforeLoad: async () => ({ user: await getSessionUser() }),
   head: () => ({
     links: [
       {
@@ -28,7 +31,7 @@ export const Route = createRootRoute({
       },
     ],
   }),
-  component: RootComponent,
+  shellComponent: RootComponent,
 })
 
 function RootComponent() {
@@ -47,6 +50,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       </head>
       <body className="dark">
         {children}
+        <Toaster />
         <Scripts />
       </body>
     </html>

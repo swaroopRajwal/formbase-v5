@@ -13,6 +13,8 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
     "paths": {
+      "@database": ["./src/lib/database/index.ts"],
+      "@database/*": ["./src/lib/database/*"],
       "@ui/*": ["./src/components/ui/*"],
       "@components/*": ["./src/components/*"],
       "@lib/*": ["./src/lib/*"],
