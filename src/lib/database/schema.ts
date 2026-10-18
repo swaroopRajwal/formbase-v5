@@ -1,4 +1,14 @@
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core"
+import {
+  pgTable,
+  pgEnum,
+  text,
+  timestamp,
+  boolean,
+  index,
+  integer,
+  jsonb,
+} from "drizzle-orm/pg-core"
+import { FIELD_TYPES } from "../forms/fieldSchemas"
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -70,4 +80,71 @@ export const verification = pgTable(
       .notNull(),
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)]
+)
+
+export const formStatus = pgEnum("form_status", [
+  "draft",
+  "published",
+  "closed",
+])
+export const fieldType = pgEnum("field_type", FIELD_TYPES)
+
+export const form = pgTable(
+  "form",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    status: formStatus("status").default("draft").notNull(),
+    // Random unguessable short id for the Public link. Null until first
+    // published; kept stable across Close/Reopen.
+    publicId: text("public_id").unique(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [index("form_userId_idx").on(table.userId)]
+)
+
+export type FieldSettings = {
+  maxLength?: number
+  min?: number
+  max?: number
+}
+
+export const field = pgTable(
+  "field",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    formId: text("form_id")
+      .notNull()
+      .references(() => form.id, { onDelete: "cascade" }),
+    type: fieldType("type").notNull(),
+    label: text("label").notNull(),
+    helperText: text("helper_text").notNull().default(""),
+    required: boolean("required").default(false).notNull(),
+    placeholder: text("placeholder"),
+    options: jsonb("options").$type<string[]>(),
+    allowOther: boolean("allow_other").default(false).notNull(),
+    // Type-specific validation: Number min/max, Short/Paragraph maxLength.
+    settings: jsonb("settings").$type<FieldSettings>().default({}).notNull(),
+    position: integer("position").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("field_formId_position_idx").on(table.formId, table.position),
+  ]
 )
