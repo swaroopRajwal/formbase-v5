@@ -13,7 +13,7 @@ const FakeInput = ({
   tall,
 }: {
   text: string
-  fallback: string
+  fallback?: string
   icon?: React.ReactNode
   tall?: boolean
 }) => (
@@ -24,7 +24,7 @@ const FakeInput = ({
 )
 
 const optionLabels = (f: EditorField) =>
-  f.options.map((o, i) => o.value.trim() || `Option ${i + 1}`)
+  f.options.map((o) => o.value.trim())
 
 const Choices = ({
   f,
@@ -54,9 +54,9 @@ const Control = ({ f }: { f: EditorField }) => {
     case "url":
     case "email":
     case "number":
-      return <FakeInput text={f.placeholder} fallback="Your answer" />
+      return <FakeInput text={f.placeholder} />
     case "paragraph":
-      return <FakeInput text={f.placeholder} fallback="Your answer" tall />
+      return <FakeInput text={f.placeholder} tall />
     case "radio":
       return <Choices f={f} shape="round" />
     case "checkbox":
@@ -81,7 +81,6 @@ const Control = ({ f }: { f: EditorField }) => {
       return (
         <FakeInput
           text={f.placeholder}
-          fallback={f.type === "date" ? "Pick a date" : "e.g. Tomorrow 8pm"}
           icon={<IconCalendar className="size-4" />}
         />
       )

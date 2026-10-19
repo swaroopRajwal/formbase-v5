@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { FIELD_TYPES, fieldSchema } from "./fieldSchemas"
 import {
+  FIELD_TYPE_LABELS,
   SETTINGS_BY_TYPE,
   blankField,
   dropIndexFor,
@@ -25,10 +26,31 @@ describe("blankField", () => {
     }
   })
 
+  it("labels each field with its type name", () => {
+    for (const type of FIELD_TYPES)
+      expect(blankField(type).label).toBe(FIELD_TYPE_LABELS[type])
+  })
+
+  it("pre-fills placeholders and helper text for date fields", () => {
+    expect(blankField("date").placeholder).not.toBe("")
+    expect(blankField("datetime").placeholder).not.toBe("")
+    expect(blankField("datetime").helperText).toContain("Next Friday")
+    expect(blankField("short").placeholder).toBe("")
+    expect(blankField("short").helperText).toBe("")
+  })
+
   it("starts choice fields with options and nothing else with options", () => {
     expect(blankField("radio").options.length).toBeGreaterThan(0)
     expect(blankField("select").options.length).toBeGreaterThan(0)
     expect(blankField("short").options).toEqual([])
+  })
+
+  it("starts choice fields with real Option 1 and Option 2", () => {
+    for (const type of ["radio", "checkbox", "select", "multi_select"] as const)
+      expect(blankField(type).options).toEqual([
+        { value: "Option 1" },
+        { value: "Option 2" },
+      ])
   })
 })
 
@@ -131,7 +153,7 @@ describe("validateEditor", () => {
   it("maps errors to react-hook-form paths", () => {
     const result = validateEditor(
       values([
-        blankField("short"),
+        { ...blankField("short"), label: "" },
         {
           ...labelled(blankField("number")),
           min: "10",

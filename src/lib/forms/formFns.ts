@@ -9,6 +9,7 @@ import { z } from "zod"
 import { fieldToRow } from "./fieldRows"
 import { saveFormSchema } from "./fieldSchemas"
 import { generatePublicId, nextStatus, type LifecycleAction } from "./lifecycle"
+import { toPublicForm } from "./publicForm"
 
 const requireUserId = async () => {
   const session = await auth.api.getSession({ headers: getRequestHeaders() })
@@ -180,4 +181,28 @@ export const changeFormStatus = createServerFn({ method: "POST" })
     }
     if (!updated) throw new Error("Form status changed, please retry")
     return updated
+  })
+
+// Public (no auth): Respondent view of a Published Form. Unpublished and
+// unknown ids are both a 404.
+export const getPublicForm = createServerFn({ method: "GET" })
+  .validator(z.object({ publicId: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const [found] = await db
+      .select({
+        id: form.id,
+        title: form.title,
+        description: form.description,
+        status: form.status,
+      })
+      .from(form)
+      .where(eq(form.publicId, data.publicId))
+    if (found?.status !== "published") throw notFound()
+    const fields = await db
+      .select()
+      .from(field)
+      .where(eq(field.formId, found.id))
+    const publicForm = toPublicForm(found, fields)
+    if (!publicForm) throw notFound()
+    return publicForm
   })

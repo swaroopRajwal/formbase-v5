@@ -61,16 +61,27 @@ export type EditorValues = {
 
 const isChoice = (type: FieldType) => SETTINGS_BY_TYPE[type].includes("options")
 
+// Pre-filled when a Field is added; real values the Creator can edit or clear.
+const DEFAULTS_BY_TYPE: Partial<
+  Record<FieldType, { placeholder?: string; helperText?: string }>
+> = {
+  date: { placeholder: "Pick a date" },
+  datetime: {
+    placeholder: "e.g. Tomorrow 8pm",
+    helperText: 'Type a date and time in plain English, e.g. "Next Friday 3pm"',
+  },
+}
+
 export const blankField = (type: FieldType): EditorField => ({
   type,
-  label: "",
-  helperText: "",
+  label: FIELD_TYPE_LABELS[type],
+  helperText: DEFAULTS_BY_TYPE[type]?.helperText ?? "",
   required: false,
-  placeholder: "",
+  placeholder: DEFAULTS_BY_TYPE[type]?.placeholder ?? "",
   maxLength: "",
   min: "",
   max: "",
-  options: isChoice(type) ? [{ value: "" }, { value: "" }] : [],
+  options: isChoice(type) ? [{ value: "Option 1" }, { value: "Option 2" }] : [],
   allowOther: false,
 })
 
