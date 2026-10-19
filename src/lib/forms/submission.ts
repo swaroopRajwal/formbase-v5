@@ -3,7 +3,21 @@ import { MAX_TEXT_ANSWER_LENGTH, type FieldType } from "./fieldSchemas"
 import type { PublicField } from "./publicForm"
 
 export type DateRangeAnswer = { start: string; end: string }
-export type AnswerValue = string | number | boolean | string[] | DateRangeAnswer
+// A Respondent's free-text Other answer, kept distinct from any listed option
+// (even one with identical text).
+export type OtherAnswer = { other: string }
+export type AnswerValue =
+  | string
+  | number
+  | boolean
+  | string[]
+  | DateRangeAnswer
+  | OtherAnswer
+  | (string | OtherAnswer)[]
+
+// Value a browser sends to pick Other, with its text under `otherTextKey`.
+export const OTHER_CHOICE = "__other"
+export const otherTextKey = (fieldId: string) => `${fieldId}.other`
 
 // Label and type of every Field as they were when the Respondent submitted,
 // so later Form edits never change what an old Submission means.
@@ -87,21 +101,48 @@ const checkSwitch = (f: PublicField, raw: unknown): FieldCheck => {
 }
 
 const LISTED = "Choose from the listed options"
+const OTHER_REQUIRED = "Enter your answer for Other"
 
-const checkOne = (f: PublicField, raw: unknown): FieldCheck => {
-  if (typeof raw !== "string" || !f.options.includes(raw))
-    return { error: LISTED }
-  return { value: raw }
+type Raw = Record<string, unknown>
+
+const checkOtherText = (f: PublicField, raw: Raw): FieldCheck => {
+  const text = checkText(f, raw[otherTextKey(f.id)])
+  if ("error" in text && typeof raw[otherTextKey(f.id)] === "string")
+    return text
+  if ("error" in text || text.value === "") return { error: OTHER_REQUIRED }
+  return { value: { other: text.value as string } }
 }
 
-const checkMany = (f: PublicField, raw: unknown): FieldCheck => {
-  const picked = typeof raw === "string" ? [raw] : raw
+const isListed = (f: PublicField, v: unknown): v is string =>
+  typeof v === "string" && f.options.includes(v)
+
+const isOtherPick = (f: PublicField, v: unknown) =>
+  f.allowOther && v === OTHER_CHOICE
+
+// Radio/Select: exactly one of a listed option or Other, never both.
+const checkOne = (f: PublicField, input: unknown, raw: Raw): FieldCheck => {
+  if (isOtherPick(f, input)) return checkOtherText(f, raw)
+  if (!isListed(f, input)) return { error: LISTED }
+  return { value: input }
+}
+
+// Checkbox/Multi Select: any listed options, optionally plus Other.
+const checkMany = (f: PublicField, input: unknown, raw: Raw): FieldCheck => {
+  const picked = typeof input === "string" ? [input] : input
   if (!Array.isArray(picked) || picked.some((v) => typeof v !== "string"))
     return { error: LISTED }
-  if (picked.some((v) => !f.options.includes(v))) return { error: LISTED }
   if (new Set(picked).size !== picked.length)
     return { error: "Each option can only be chosen once" }
-  return { value: picked as string[] }
+  const value: (string | OtherAnswer)[] = []
+  for (const v of picked as string[]) {
+    if (isOtherPick(f, v)) {
+      const other = checkOtherText(f, raw)
+      if ("error" in other) return other
+      value.push(other.value as OtherAnswer)
+    } else if (isListed(f, v)) value.push(v)
+    else return { error: LISTED }
+  }
+  return { value }
 }
 
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/
@@ -148,9 +189,11 @@ const checkDateRange = (_f: PublicField, raw: unknown): FieldCheck => {
   return { value: { start, end } }
 }
 
+// `input` is this Field's own value; `raw` is the whole submission, for
+// companion keys such as Other text.
 const checkers: Record<
   FieldType,
-  (f: PublicField, raw: unknown) => FieldCheck
+  (f: PublicField, input: unknown, raw: Raw) => FieldCheck
 > = {
   short: checkText,
   paragraph: checkText,
@@ -169,7 +212,7 @@ const checkers: Record<
 
 export const validateSubmission = (
   fields: PublicField[],
-  raw: Record<string, unknown>
+  raw: Raw
 ): SubmissionResult => {
   const answers: Record<string, AnswerValue> = {}
   const errors: Record<string, string> = {}
@@ -179,7 +222,7 @@ export const validateSubmission = (
       if (f.required) errors[f.id] = REQUIRED
       continue
     }
-    const checked = checkers[f.type](f, input)
+    const checked = checkers[f.type](f, input, raw)
     if ("error" in checked) errors[f.id] = checked.error
     else answers[f.id] = checked.value
   }

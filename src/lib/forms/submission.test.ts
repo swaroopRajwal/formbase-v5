@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import type { PublicField } from "./publicForm"
-import { validateSubmission } from "./submission"
+import { OTHER_CHOICE, otherTextKey, validateSubmission } from "./submission"
 
 const field = (over: Partial<PublicField>): PublicField => ({
   id: "f1",
@@ -155,6 +155,83 @@ describe("validateSubmission: choices", () => {
   it("reports a required many-choice with nothing picked", () => {
     const fields = [choice("checkbox", { required: true })]
     expect(errorsOf(fields, { f1: [] }).f1).toBe("This field is required")
+  })
+})
+
+describe("validateSubmission: Other option", () => {
+  const withOther = (
+    type: PublicField["type"],
+    over: Partial<PublicField> = {}
+  ) => field({ type, options: ["a", "b"], allowOther: true, ...over })
+  const key = otherTextKey("f1")
+
+  it.each(["radio", "select"] as const)(
+    "%s Other replaces the listed choice and is stored as a distinct value",
+    (type) => {
+      const fields = [withOther(type)]
+      expect(
+        answersOf(fields, { f1: OTHER_CHOICE, [key]: "  Pears " })
+      ).toEqual({ f1: { other: "Pears" } })
+      // typing a listed option's name as Other text stays distinct from it
+      expect(answersOf(fields, { f1: OTHER_CHOICE, [key]: "a" })).toEqual({
+        f1: { other: "a" },
+      })
+    }
+  )
+
+  it.each(["radio", "select"] as const)(
+    "%s rejects Other combined with a listed option",
+    (type) => {
+      const fields = [withOther(type)]
+      expect(
+        errorsOf(fields, { f1: ["a", OTHER_CHOICE], [key]: "x" }).f1
+      ).toBeDefined()
+    }
+  )
+
+  it.each(["checkbox", "multi_select"] as const)(
+    "%s combines listed options with Other",
+    (type) => {
+      const fields = [withOther(type)]
+      expect(
+        answersOf(fields, { f1: ["a", OTHER_CHOICE], [key]: "Pears" })
+      ).toEqual({ f1: ["a", { other: "Pears" }] })
+      expect(answersOf(fields, { f1: [OTHER_CHOICE], [key]: "Pears" })).toEqual(
+        { f1: [{ other: "Pears" }] }
+      )
+    }
+  )
+
+  it.each(["radio", "select", "checkbox", "multi_select"] as const)(
+    "%s requires Other text once Other is selected",
+    (type) => {
+      const fields = [withOther(type)]
+      const picked =
+        type === "radio" || type === "select" ? OTHER_CHOICE : [OTHER_CHOICE]
+      expect(errorsOf(fields, { f1: picked }).f1).toMatch(/other/i)
+      expect(errorsOf(fields, { f1: picked, [key]: "   " }).f1).toMatch(
+        /other/i
+      )
+    }
+  )
+
+  it("rejects Other when the Field does not allow it", () => {
+    const fields = [withOther("radio", { allowOther: false })]
+    expect(errorsOf(fields, { f1: OTHER_CHOICE, [key]: "x" }).f1).toMatch(
+      /listed options/
+    )
+  })
+
+  it("applies the text length cap to Other text", () => {
+    const fields = [withOther("radio")]
+    expect(
+      errorsOf(fields, { f1: OTHER_CHOICE, [key]: "x".repeat(10_001) }).f1
+    ).toMatch(/at most/)
+  })
+
+  it("ignores stray Other text when Other is not selected", () => {
+    const fields = [withOther("radio")]
+    expect(answersOf(fields, { f1: "a", [key]: "junk" })).toEqual({ f1: "a" })
   })
 })
 

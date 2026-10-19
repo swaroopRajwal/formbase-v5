@@ -2,6 +2,7 @@ import PageWrapper from "@components/shared/pageWrapper"
 import { collectAnswers } from "@lib/forms/collectAnswers"
 import { submitForm } from "@lib/forms/formFns"
 import type { PublicField, PublicForm } from "@lib/forms/publicForm"
+import { OTHER_CHOICE, otherTextKey } from "@lib/forms/submission"
 import { Button } from "@ui/button"
 import { Input } from "@ui/input"
 import { Label } from "@ui/label"
@@ -11,6 +12,15 @@ import { useState, type FormEvent } from "react"
 
 const nativeSelect =
   "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30"
+
+const OtherText = ({ f }: { f: PublicField }) => (
+  <Input
+    name={otherTextKey(f.id)}
+    type="text"
+    placeholder="Your answer"
+    aria-label={`${f.label} other answer`}
+  />
+)
 
 const Choices = ({
   f,
@@ -37,10 +47,11 @@ const Choices = ({
     ))}
     {f.allowOther && (
       <label className="flex items-center gap-2 text-sm">
-        <input type={kind} name={f.id} value="__other" />
+        <input type={kind} name={f.id} value={OTHER_CHOICE} />
         Other
       </label>
     )}
+    {f.allowOther && <OtherText f={f} />}
   </div>
 )
 
@@ -72,26 +83,29 @@ const Control = ({ f }: { f: PublicField }) => {
     case "multi_select": {
       const multiple = f.type === "multi_select"
       return (
-        <select
-          id={f.id}
-          name={f.id}
-          required={f.required}
-          multiple={multiple}
-          defaultValue={multiple ? [] : ""}
-          className={nativeSelect}
-        >
-          {!multiple && (
-            <option value="" disabled>
-              {f.placeholder || "Select…"}
-            </option>
-          )}
-          {f.options.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-          {f.allowOther && <option value="__other">Other</option>}
-        </select>
+        <>
+          <select
+            id={f.id}
+            name={f.id}
+            required={f.required}
+            multiple={multiple}
+            defaultValue={multiple ? [] : ""}
+            className={nativeSelect}
+          >
+            {!multiple && (
+              <option value="" disabled>
+                {f.placeholder || "Select…"}
+              </option>
+            )}
+            {f.options.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+            {f.allowOther && <option value={OTHER_CHOICE}>Other</option>}
+          </select>
+          {f.allowOther && <OtherText f={f} />}
+        </>
       )
     }
     case "date":
