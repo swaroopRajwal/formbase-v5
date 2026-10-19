@@ -22,7 +22,7 @@ export const FIELD_TYPES = [
 export type FieldType = (typeof FIELD_TYPES)[number]
 
 const common = {
-  label: z.string().trim().min(1).max(200),
+  label: z.string().trim().min(1, "Label is required").max(200),
   helperText: z.string().trim().max(1000).default(""),
   required: z.boolean().default(false),
 }
@@ -30,8 +30,8 @@ const common = {
 const placeholder = z.string().trim().max(200).optional()
 
 const optionsList = z
-  .array(z.string().trim().min(1).max(200))
-  .min(1)
+  .array(z.string().trim().min(1, "Option can't be empty").max(200))
+  .min(1, "Add at least one option")
   .max(MAX_OPTIONS_PER_FIELD)
   .refine(
     (opts) => new Set(opts.map((o) => o.toLowerCase())).size === opts.length,
@@ -108,8 +108,22 @@ export type FieldInput = z.input<typeof fieldSchema>
 export type Field = z.output<typeof fieldSchema>
 
 export const formDraftSchema = z.strictObject({
-  title: z.string().trim().min(1).max(200),
+  title: z.string().trim().min(1, "Title is required").max(200),
   description: z.string().trim().max(2000).default(""),
   fields: z.array(fieldSchema).max(MAX_FIELDS_PER_FORM),
 })
 export type FormDraft = z.output<typeof formDraftSchema>
+
+// Save payload: existing Fields carry their id so rows (and later, answers
+// keyed to them) survive edits; new Fields have none.
+export const saveFormSchema = z.strictObject({
+  formId: z.string().min(1),
+  title: formDraftSchema.shape.title,
+  description: formDraftSchema.shape.description,
+  fields: z
+    .array(
+      z.strictObject({ id: z.string().min(1).optional(), field: fieldSchema })
+    )
+    .max(MAX_FIELDS_PER_FORM),
+})
+export type SaveFormInput = z.input<typeof saveFormSchema>

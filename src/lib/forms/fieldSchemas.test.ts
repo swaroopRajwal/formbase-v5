@@ -5,6 +5,7 @@ import {
   MAX_TEXT_ANSWER_LENGTH,
   fieldSchema,
   formDraftSchema,
+  saveFormSchema,
 } from "./fieldSchemas"
 
 const base = { label: "Name", helperText: "", required: false }
@@ -232,5 +233,33 @@ describe("formDraftSchema", () => {
     expect(formDraftSchema.safeParse({ title: "", fields: [] }).success).toBe(
       false
     )
+  })
+})
+
+describe("saveFormSchema", () => {
+  const field = { ...base, type: "short" as const }
+  const payload = { formId: "f1", title: "T", fields: [{ field }] }
+
+  it("accepts new fields without ids and existing fields with ids", () => {
+    const result = saveFormSchema.safeParse({
+      ...payload,
+      fields: [{ field }, { id: "x", field }],
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it("rejects more than the field cap and invalid nested fields", () => {
+    const tooMany = Array.from({ length: MAX_FIELDS_PER_FORM + 1 }, () => ({
+      field,
+    }))
+    expect(
+      saveFormSchema.safeParse({ ...payload, fields: tooMany }).success
+    ).toBe(false)
+    expect(
+      saveFormSchema.safeParse({
+        ...payload,
+        fields: [{ field: { ...field, type: "switch", placeholder: "x" } }],
+      }).success
+    ).toBe(false)
   })
 })
