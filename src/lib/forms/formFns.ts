@@ -1,5 +1,5 @@
 import db from "@database"
-import { field, form } from "@database/schema"
+import { field, form, submission } from "@database/schema"
 import { auth } from "@lib/auth"
 import { notFound, redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
@@ -10,6 +10,7 @@ import { fieldToRow } from "./fieldRows"
 import { saveFormSchema } from "./fieldSchemas"
 import { generatePublicId, nextStatus, type LifecycleAction } from "./lifecycle"
 import { toPublicForm } from "./publicForm"
+import { validateSubmission } from "./submission"
 
 const requireUserId = async () => {
   const session = await auth.api.getSession({ headers: getRequestHeaders() })
@@ -183,26 +184,49 @@ export const changeFormStatus = createServerFn({ method: "POST" })
     return updated
   })
 
-// Public (no auth): Respondent view of a Published Form. Unpublished and
-// unknown ids are both a 404.
+// Unpublished and unknown ids are both a 404.
+const loadPublishedForm = async (publicId: string) => {
+  const [found] = await db
+    .select({
+      id: form.id,
+      title: form.title,
+      description: form.description,
+      status: form.status,
+    })
+    .from(form)
+    .where(eq(form.publicId, publicId))
+  if (found?.status !== "published") throw notFound()
+  const fields = await db.select().from(field).where(eq(field.formId, found.id))
+  const publicForm = toPublicForm(found, fields)
+  if (!publicForm) throw notFound()
+  return { formId: found.id, publicForm }
+}
+
+// Public (no auth): Respondent view of a Published Form.
 export const getPublicForm = createServerFn({ method: "GET" })
   .validator(z.object({ publicId: z.string().min(1) }))
+  .handler(
+    async ({ data }) => (await loadPublishedForm(data.publicId)).publicForm
+  )
+
+// Public (no auth): validates answers against the Form as it is now and, if
+// valid, stores them with a snapshot of the Field labels/types. Invalid
+// answers come back as per-field errors, not a thrown error.
+export const submitForm = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      publicId: z.string().min(1),
+      answers: z.record(z.string(), z.unknown()),
+    })
+  )
   .handler(async ({ data }) => {
-    const [found] = await db
-      .select({
-        id: form.id,
-        title: form.title,
-        description: form.description,
-        status: form.status,
-      })
-      .from(form)
-      .where(eq(form.publicId, data.publicId))
-    if (found?.status !== "published") throw notFound()
-    const fields = await db
-      .select()
-      .from(field)
-      .where(eq(field.formId, found.id))
-    const publicForm = toPublicForm(found, fields)
-    if (!publicForm) throw notFound()
-    return publicForm
+    const { formId, publicForm } = await loadPublishedForm(data.publicId)
+    const result = validateSubmission(publicForm.fields, data.answers)
+    if (!result.ok) return { ok: false as const, errors: result.errors }
+    await db.insert(submission).values({
+      formId,
+      answers: result.answers,
+      snapshot: result.snapshot,
+    })
+    return { ok: true as const }
   })

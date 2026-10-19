@@ -9,6 +9,7 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core"
 import { FIELD_TYPES } from "../forms/fieldSchemas"
+import type { AnswerValue, SnapshotField } from "../forms/submission"
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -143,4 +144,23 @@ export const field = pgTable(
   (table) => [
     index("field_formId_position_idx").on(table.formId, table.position),
   ]
+)
+
+export const submission = pgTable(
+  "submission",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    formId: text("form_id")
+      .notNull()
+      .references(() => form.id, { onDelete: "cascade" }),
+    // Validated answers keyed by Field id. No FK to field: a Field may later
+    // be removed while old Submissions stay readable.
+    answers: jsonb("answers").$type<Record<string, AnswerValue>>().notNull(),
+    // Field labels/types as they were at submit time.
+    snapshot: jsonb("snapshot").$type<SnapshotField[]>().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("submission_formId_idx").on(table.formId)]
 )

@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm"
-import { user, session, account, form, field } from "./schema"
+import { user, session, account, form, field, submission } from "./schema"
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
@@ -27,11 +27,19 @@ export const formRelations = relations(form, ({ one, many }) => ({
     references: [user.id],
   }),
   fields: many(field),
+  submissions: many(submission),
 }))
 
 export const fieldRelations = relations(field, ({ one }) => ({
   form: one(form, {
     fields: [field.formId],
+    references: [form.id],
+  }),
+}))
+
+export const submissionRelations = relations(submission, ({ one }) => ({
+  form: one(form, {
+    fields: [submission.formId],
     references: [form.id],
   }),
 }))

@@ -1,9 +1,13 @@
 import PageWrapper from "@components/shared/pageWrapper"
+import { collectAnswers } from "@lib/forms/collectAnswers"
+import { submitForm } from "@lib/forms/formFns"
 import type { PublicField, PublicForm } from "@lib/forms/publicForm"
+import { Button } from "@ui/button"
 import { Input } from "@ui/input"
 import { Label } from "@ui/label"
 import { Switch } from "@ui/switch"
 import { Textarea } from "@ui/textarea"
+import { useState, type FormEvent } from "react"
 
 const nativeSelect =
   "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30"
@@ -121,30 +125,86 @@ const Control = ({ f }: { f: PublicField }) => {
   }
 }
 
-const PublicFormPage = ({ form }: { form: PublicForm }) => (
-  <PageWrapper className="flex max-w-2xl flex-col gap-6">
-    <header className="flex flex-col gap-1">
-      <h1 className="text-2xl font-semibold">{form.title}</h1>
-      {form.description && (
-        <p className="text-sm text-muted-foreground">{form.description}</p>
-      )}
-    </header>
-    {/* Submitting is a later ticket; stop the native GET submit meanwhile. */}
-    <form className="flex flex-col gap-5" onSubmit={(e) => e.preventDefault()}>
-      {form.fields.map((f) => (
-        <div key={f.id} className="flex flex-col gap-1.5">
-          <Label id={`${f.id}-label`} htmlFor={f.id}>
-            {f.label}
-            {f.required && <span className="text-destructive">*</span>}
-          </Label>
-          {f.helperText && (
-            <p className="text-xs text-muted-foreground">{f.helperText}</p>
-          )}
-          <Control f={f} />
-        </div>
-      ))}
-    </form>
+const Thanks = () => (
+  <PageWrapper className="flex max-w-2xl flex-col gap-2">
+    <h1 className="text-2xl font-semibold">
+      Thanks, your response was recorded
+    </h1>
   </PageWrapper>
 )
+
+const PublicFormPage = ({
+  form,
+  publicId,
+}: {
+  form: PublicForm
+  publicId: string
+}) => {
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [done, setDone] = useState(false)
+
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setSubmitting(true)
+    setFormError(null)
+    setErrors({})
+    try {
+      const result = await submitForm({
+        data: {
+          publicId,
+          answers: collectAnswers(form.fields, new FormData(e.currentTarget)),
+        },
+      })
+      if (result.ok) setDone(true)
+      else setErrors(result.errors)
+    } catch {
+      setFormError("Something went wrong. Please try again.")
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  if (done) return <Thanks />
+
+  return (
+    <PageWrapper className="flex max-w-2xl flex-col gap-6">
+      <header className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold">{form.title}</h1>
+        {form.description && (
+          <p className="text-sm text-muted-foreground">{form.description}</p>
+        )}
+      </header>
+      <form className="flex flex-col gap-5" onSubmit={onSubmit}>
+        {form.fields.map((f) => (
+          <div key={f.id} className="flex flex-col gap-1.5">
+            <Label id={`${f.id}-label`} htmlFor={f.id}>
+              {f.label}
+              {f.required && <span className="text-destructive">*</span>}
+            </Label>
+            {f.helperText && (
+              <p className="text-xs text-muted-foreground">{f.helperText}</p>
+            )}
+            <Control f={f} />
+            {errors[f.id] && (
+              <p role="alert" className="text-xs text-destructive">
+                {errors[f.id]}
+              </p>
+            )}
+          </div>
+        ))}
+        {formError && (
+          <p role="alert" className="text-sm text-destructive">
+            {formError}
+          </p>
+        )}
+        <Button type="submit" disabled={submitting} className="self-start">
+          {submitting ? "Submitting…" : "Submit"}
+        </Button>
+      </form>
+    </PageWrapper>
+  )
+}
 
 export default PublicFormPage

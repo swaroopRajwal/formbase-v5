@@ -21,5 +21,6 @@ export const Route = createFileRoute("/f/$publicId")({
 })
 
 function RouteComponent() {
-  return <PublicFormPage form={Route.useLoaderData()} />
+  const { publicId } = Route.useParams()
+  return <PublicFormPage form={Route.useLoaderData()} publicId={publicId} />
 }
