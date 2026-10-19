@@ -1,7 +1,11 @@
+import { TOAST_TYPES } from "@lib/constants/toast"
 import { MAX_FIELDS_PER_FORM } from "@lib/forms/fieldSchemas"
 import type { EditorValues } from "@lib/forms/editorModel"
+import { availableAction, type LifecycleAction } from "@lib/forms/lifecycle"
 import {
   IconArrowLeft,
+  IconCheck,
+  IconLink,
   IconLayoutSidebar,
   IconSettings,
 } from "@tabler/icons-react"
@@ -9,19 +13,22 @@ import { Link } from "@tanstack/react-router"
 import { Button, buttonVariants } from "@ui/button"
 import { Input } from "@ui/input"
 import { Spinner } from "@ui/spinner"
+import { toast } from "@ui/toast"
 import { cn } from "cn"
+import { useEffect, useRef, useState } from "react"
 import { Controller, useFormContext } from "react-hook-form"
 
 const STATUS_STYLES: Record<string, string> = {
-  draft: "bg-muted text-muted-foreground",
+  unpublished: "bg-muted text-muted-foreground",
   published: "bg-emerald-500/15 text-emerald-500",
-  closed: "bg-amber-500/15 text-amber-500",
 }
 
 type Props = {
-  status: string
+  status: "unpublished" | "published"
+  publicId: string | null
+  changingStatus: boolean
+  onChangeStatus: (action: LifecycleAction) => void
   fieldCount: number
-  readOnly: boolean
   dirty: boolean
   saving: boolean
   onOpenSettings: () => void
@@ -30,14 +37,34 @@ type Props = {
 
 const EditorHeader = ({
   status,
+  publicId,
+  changingStatus,
+  onChangeStatus,
   fieldCount,
-  readOnly,
   dirty,
   saving,
   onOpenSettings,
   onTogglePalette,
 }: Props) => {
   const { control, formState } = useFormContext<EditorValues>()
+  const [copied, setCopied] = useState(false)
+  const available = availableAction(status)
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  useEffect(() => () => clearTimeout(copyTimer.current), [])
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        `${window.location.origin}/f/${publicId}`
+      )
+    } catch {
+      toast.add({ type: TOAST_TYPES.error, title: "Could not copy link" })
+      return
+    }
+    setCopied(true)
+    clearTimeout(copyTimer.current)
+    copyTimer.current = setTimeout(() => setCopied(false), 2000)
+  }
 
   return (
     <header className="z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-3">
@@ -66,7 +93,6 @@ const EditorHeader = ({
             {...field}
             aria-label="Form title"
             aria-invalid={!!formState.errors.title}
-            disabled={readOnly}
             placeholder="Untitled form"
             className="h-8 max-w-sm min-w-0 flex-1 border-transparent bg-transparent text-base font-medium hover:border-input"
           />
@@ -90,6 +116,22 @@ const EditorHeader = ({
         <span className="hidden text-xs text-muted-foreground sm:inline">
           {fieldCount} / {MAX_FIELDS_PER_FORM} fields
         </span>
+        {status === "published" && publicId && (
+          <Button type="button" variant="outline" onClick={copyLink}>
+            {copied ? <IconCheck /> : <IconLink />}
+            {copied ? "Copied" : "Copy link"}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={changingStatus || dirty}
+          title={dirty ? "Save your changes first" : undefined}
+          onClick={() => onChangeStatus(available.action)}
+        >
+          {changingStatus && <Spinner />}
+          {available.label}
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -98,7 +140,7 @@ const EditorHeader = ({
         >
           <IconSettings />
         </Button>
-        <Button type="submit" disabled={readOnly || !dirty || saving}>
+        <Button type="submit" disabled={!dirty || saving}>
           {saving && <Spinner />}
           Save
         </Button>

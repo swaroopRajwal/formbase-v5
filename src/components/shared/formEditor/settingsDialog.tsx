@@ -17,11 +17,10 @@ import { Controller, useFormContext } from "react-hook-form"
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  readOnly: boolean
 }
 
 // Edits the same form values as the header; the header Save persists them.
-const SettingsDialog = ({ open, onOpenChange, readOnly }: Props) => {
+const SettingsDialog = ({ open, onOpenChange }: Props) => {
   const { control, register, formState } = useFormContext<EditorValues>()
   const { errors } = formState
 
@@ -34,7 +33,7 @@ const SettingsDialog = ({ open, onOpenChange, readOnly }: Props) => {
             Changes are saved with the rest of the form.
           </DialogDescription>
         </DialogHeader>
-        <fieldset disabled={readOnly} className="flex flex-col gap-4">
+        <fieldset className="flex flex-col gap-4">
           <Field data-invalid={!!errors.title}>
             <FieldLabel htmlFor="settings-title">Title</FieldLabel>
             <Controller

@@ -38,8 +38,13 @@ import {
 } from "@lib/forms/editorModel"
 import { rowToEditorField } from "@lib/forms/fieldRows"
 import { MAX_FIELDS_PER_FORM, type FieldType } from "@lib/forms/fieldSchemas"
-import { getMyFormWithFields, saveForm } from "@lib/forms/formFns"
-import { getRouteApi, useBlocker } from "@tanstack/react-router"
+import {
+  changeFormStatus,
+  getMyFormWithFields,
+  saveForm,
+} from "@lib/forms/formFns"
+import type { LifecycleAction } from "@lib/forms/lifecycle"
+import { getRouteApi, useBlocker, useRouter } from "@tanstack/react-router"
 import { toast } from "@ui/toast"
 import { cn } from "cn"
 import { useCallback, useEffect, useRef, useState } from "react"
@@ -79,7 +84,27 @@ const collisionDetection: CollisionDetection = (args) => {
 
 const FormEditorPage = () => {
   const loaded = routeApi.useLoaderData()
-  const readOnly = loaded.status === "closed"
+  const router = useRouter()
+  const [changingStatus, setChangingStatus] = useState(false)
+
+  const onChangeStatus = async (action: LifecycleAction) => {
+    setChangingStatus(true)
+    try {
+      await changeFormStatus({ data: { formId: loaded.id, action } })
+      await router.invalidate()
+      // Buttons are disabled while dirty, so resetting never loses edits.
+      form.reset(
+        toValues(await getMyFormWithFields({ data: { formId: loaded.id } }))
+      )
+    } catch (e) {
+      toast.add({
+        type: TOAST_TYPES.error,
+        title: e instanceof Error ? e.message : "Could not change form status",
+      })
+    } finally {
+      setChangingStatus(false)
+    }
+  }
 
   const form = useForm<EditorValues>({
     resolver: editorResolver as unknown as Resolver<EditorValues>,
@@ -120,12 +145,12 @@ const FormEditorPage = () => {
 
   const addField = useCallback(
     (type: FieldType, at: number = fields.length) => {
-      if (readOnly || fields.length >= MAX_FIELDS_PER_FORM) return
+      if (fields.length >= MAX_FIELDS_PER_FORM) return
       pendingSelect.current = at
       insert(at, blankField(type))
       setDrawer(null)
     },
-    [fields.length, insert, readOnly]
+    [fields.length, insert]
   )
 
   const removeField = (index: number) => {
@@ -185,7 +210,7 @@ const FormEditorPage = () => {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault()
-        if (!readOnly) void submit()
+        void submit()
       } else if (e.key === "Escape" && !e.defaultPrevented) {
         const el = e.target as HTMLElement
         if (!/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) setSelectedKey(null)
@@ -258,8 +283,10 @@ const FormEditorPage = () => {
       >
         <EditorHeader
           status={loaded.status}
+          publicId={loaded.publicId}
+          changingStatus={changingStatus}
+          onChangeStatus={onChangeStatus}
           fieldCount={fields.length}
-          readOnly={readOnly}
           dirty={isDirty}
           saving={isSubmitting}
           onOpenSettings={() => setSettingsOpen(true)}
@@ -267,11 +294,6 @@ const FormEditorPage = () => {
             setDrawer((d) => (d === "palette" ? null : "palette"))
           }
         />
-        {readOnly && (
-          <p className="shrink-0 border-b bg-amber-500/10 px-4 py-2 text-center text-sm">
-            This form is closed. Reopen it to edit its fields.
-          </p>
-        )}
 
         <DndContext
           id="form-editor-dnd"
@@ -291,18 +313,13 @@ const FormEditorPage = () => {
                   : "hidden lg:block"
               )}
             >
-              <FieldPalette
-                disabled={readOnly}
-                atCap={atCap}
-                onAdd={(t) => addField(t)}
-              />
+              <FieldPalette atCap={atCap} onAdd={(t) => addField(t)} />
             </aside>
 
             <main className="min-w-0 flex-1 overflow-y-auto bg-muted/30">
               <FieldCanvas
                 keys={keys}
                 selectedKey={selectedKey}
-                readOnly={readOnly}
                 dropIndex={dropIndex}
                 fieldsError={[errors.fields?.root ?? errors.fields]}
                 onSelect={(k) => {
@@ -323,12 +340,10 @@ const FormEditorPage = () => {
               )}
             >
               {selectedIndex >= 0 ? (
-                <fieldset disabled={readOnly}>
-                  <FieldConfigPanel
-                    key={`${selectedKey}:${selectedIndex}`}
-                    index={selectedIndex}
-                  />
-                </fieldset>
+                <FieldConfigPanel
+                  key={`${selectedKey}:${selectedIndex}`}
+                  index={selectedIndex}
+                />
               ) : (
                 <FieldConfigEmpty hasFields={fields.length > 0} />
               )}
@@ -341,18 +356,13 @@ const FormEditorPage = () => {
               <FieldCardBody
                 index={activeIndex}
                 selected={keys[activeIndex] === selectedKey}
-                readOnly={readOnly}
                 onRemove={() => {}}
               />
             )}
           </DragOverlay>
         </DndContext>
 
-        <SettingsDialog
-          open={settingsOpen}
-          onOpenChange={setSettingsOpen}
-          readOnly={readOnly}
-        />
+        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       </form>
 
       <ConfirmationDialog

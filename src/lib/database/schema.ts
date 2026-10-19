@@ -82,11 +82,7 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)]
 )
 
-export const formStatus = pgEnum("form_status", [
-  "draft",
-  "published",
-  "closed",
-])
+export const formStatus = pgEnum("form_status", ["unpublished", "published"])
 export const fieldType = pgEnum("field_type", FIELD_TYPES)
 
 export const form = pgTable(
@@ -100,9 +96,9 @@ export const form = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     description: text("description").notNull().default(""),
-    status: formStatus("status").default("draft").notNull(),
+    status: formStatus("status").default("unpublished").notNull(),
     // Random unguessable short id for the Public link. Null until first
-    // published; kept stable across Close/Reopen.
+    // published; kept stable across unpublish/republish.
     publicId: text("public_id").unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

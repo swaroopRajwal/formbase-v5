@@ -8,6 +8,7 @@ import { and, asc, desc, eq, inArray, notInArray } from "drizzle-orm"
 import { z } from "zod"
 import { fieldToRow } from "./fieldRows"
 import { saveFormSchema } from "./fieldSchemas"
+import { generatePublicId, nextStatus, type LifecycleAction } from "./lifecycle"
 
 const requireUserId = async () => {
   const session = await auth.api.getSession({ headers: getRequestHeaders() })
@@ -19,6 +20,7 @@ const formSummary = {
   id: form.id,
   title: form.title,
   status: form.status,
+  publicId: form.publicId,
   updatedAt: form.updatedAt,
 }
 
@@ -85,12 +87,10 @@ export const saveForm = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const userId = await requireUserId()
     const [found] = await db
-      .select({ id: form.id, status: form.status })
+      .select({ id: form.id })
       .from(form)
       .where(and(eq(form.id, data.formId), eq(form.userId, userId)))
     if (!found) throw notFound()
-    if (found.status === "closed")
-      throw new Error("Reopen this form before editing it")
 
     const keptIds = data.fields.flatMap((f) => (f.id ? [f.id] : []))
     if (keptIds.length > 0) {
@@ -126,4 +126,58 @@ export const saveForm = createServerFn({ method: "POST" })
     ] as unknown as Parameters<typeof db.batch>[0]
     await db.batch(writes)
     return { saved: true }
+  })
+
+// Moves a Form along Unpublished <-> Published. The first
+// publish assigns the Public link id; it is kept across unpublish/republish.
+export const changeFormStatus = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      formId: z.string().min(1),
+      action: z.enum(["publish", "unpublish"]),
+    })
+  )
+  .handler(async ({ data }) => {
+    const userId = await requireUserId()
+    const [found] = await db
+      .select({ status: form.status, publicId: form.publicId })
+      .from(form)
+      .where(and(eq(form.id, data.formId), eq(form.userId, userId)))
+    if (!found) throw notFound()
+    const action: LifecycleAction = data.action
+    const to = nextStatus(found.status, action)
+    if (!to) throw new Error(`Cannot ${action} a ${found.status} form`)
+
+    if (action === "publish") {
+      const [anyField] = await db
+        .select({ id: field.id })
+        .from(field)
+        .where(eq(field.formId, data.formId))
+        .limit(1)
+      if (!anyField) throw new Error("Add at least one field before publishing")
+    }
+
+    // The status guard in WHERE keeps concurrent requests from double-applying.
+    // A Public link id collision (unique violation) is retried with a new id.
+    let updated
+    for (let attempt = 0; attempt < 3 && !updated; attempt++) {
+      try {
+        ;[updated] = await db
+          .update(form)
+          .set({ status: to, publicId: found.publicId ?? generatePublicId() })
+          .where(
+            and(
+              eq(form.id, data.formId),
+              eq(form.userId, userId),
+              eq(form.status, found.status)
+            )
+          )
+          .returning(formSummary)
+        break
+      } catch (e) {
+        if (found.publicId || attempt === 2) throw e
+      }
+    }
+    if (!updated) throw new Error("Form status changed, please retry")
+    return updated
   })

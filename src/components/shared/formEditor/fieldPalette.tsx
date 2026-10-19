@@ -55,12 +55,11 @@ const PaletteItem = ({ type, disabled, onAdd }: ItemProps) => {
 }
 
 type Props = {
-  disabled: boolean
   atCap: boolean
   onAdd: (type: FieldType) => void
 }
 
-const FieldPalette = ({ disabled, atCap, onAdd }: Props) => (
+const FieldPalette = ({ atCap, onAdd }: Props) => (
   <div className="flex flex-col gap-5 p-4">
     <div className="flex flex-col gap-1">
       <h2 className="text-sm font-semibold">Fields</h2>
@@ -76,12 +75,7 @@ const FieldPalette = ({ disabled, atCap, onAdd }: Props) => (
           {g.label}
         </h3>
         {g.types.map((t) => (
-          <PaletteItem
-            key={t}
-            type={t}
-            disabled={disabled || atCap}
-            onAdd={onAdd}
-          />
+          <PaletteItem key={t} type={t} disabled={atCap} onAdd={onAdd} />
         ))}
       </div>
     ))}

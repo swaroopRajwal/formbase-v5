@@ -26,7 +26,6 @@ type CardProps = {
   id: string
   index: number
   selected: boolean
-  readOnly: boolean
   onSelect: () => void
   onRemove: () => void
 }
@@ -35,10 +34,9 @@ type CardProps = {
 export const FieldCardBody = ({
   index,
   selected,
-  readOnly,
   handleProps,
   onRemove,
-}: Pick<CardProps, "index" | "selected" | "readOnly" | "onRemove"> & {
+}: Pick<CardProps, "index" | "selected" | "onRemove"> & {
   handleProps?: React.ComponentProps<"button">
 }) => {
   const { formState } = useFormContext<EditorValues>()
@@ -57,8 +55,7 @@ export const FieldCardBody = ({
       <button
         type="button"
         aria-label="Drag to reorder"
-        disabled={readOnly}
-        className="-ml-1 mt-0.5 flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 disabled:invisible"
+        className="-ml-1 mt-0.5 flex size-6 shrink-0 cursor-grab touch-none items-center justify-center rounded text-muted-foreground outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50"
         onClick={(e) => e.stopPropagation()}
         {...handleProps}
       >
@@ -72,21 +69,19 @@ export const FieldCardBody = ({
           </span>
         )}
       </div>
-      {!readOnly && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Remove field"
-          className="text-muted-foreground hover:text-destructive"
-          onClick={(e) => {
-            e.stopPropagation()
-            onRemove()
-          }}
-        >
-          <IconTrash />
-        </Button>
-      )}
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Remove field"
+        className="text-muted-foreground hover:text-destructive"
+        onClick={(e) => {
+          e.stopPropagation()
+          onRemove()
+        }}
+      >
+        <IconTrash />
+      </Button>
     </div>
   )
 }
@@ -99,7 +94,7 @@ const SortableCard = (props: CardProps) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: props.id, disabled: props.readOnly })
+  } = useSortable({ id: props.id })
 
   return (
     <div
@@ -122,7 +117,6 @@ const SortableCard = (props: CardProps) => {
 type Props = {
   keys: string[]
   selectedKey: string | null
-  readOnly: boolean
   /** Index a palette drag would insert at, or null when not dragging one. */
   dropIndex: number | null
   fieldsError: Parameters<typeof FieldError>[0]["errors"]
@@ -133,7 +127,6 @@ type Props = {
 const FieldCanvas = ({
   keys,
   selectedKey,
-  readOnly,
   dropIndex,
   fieldsError,
   onSelect,
@@ -142,7 +135,7 @@ const FieldCanvas = ({
   const { control } = useFormContext<EditorValues>()
   const title = useWatch({ control, name: "title" })
   const description = useWatch({ control, name: "description" })
-  const { setNodeRef } = useDroppable({ id: CANVAS_ID, disabled: readOnly })
+  const { setNodeRef } = useDroppable({ id: CANVAS_ID })
 
   return (
     <div
@@ -170,7 +163,6 @@ const FieldCanvas = ({
                 id={key}
                 index={i}
                 selected={key === selectedKey}
-                readOnly={readOnly}
                 onSelect={() => onSelect(key)}
                 onRemove={() => onRemove(i)}
               />
