@@ -1,72 +1,61 @@
-import ConfirmationDialog from "@components/shared/confirmationDialog"
-import authClient from "@lib/auth/authClient"
 import { TOAST_TYPES } from "@lib/constants/toast"
-import useGetCurrentUser from "@lib/hooks/useGetCurrentUser"
-import { useNavigate, useRouter } from "@tanstack/react-router"
+import { createBlankForm } from "@lib/forms/formFns"
+import { Link, getRouteApi, useNavigate } from "@tanstack/react-router"
 import { Button } from "@ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@ui/card"
 import { toast } from "@ui/toast"
 import { useState } from "react"
 
-const DashboardPage = () => {
-  const user = useGetCurrentUser()
+const routeApi = getRouteApi("/__protected/dashboard")
 
-  const router = useRouter()
+const DashboardPage = () => {
+  const forms = routeApi.useLoaderData()
   const navigate = useNavigate()
 
-  const [isLogoutConfirmationOpen, setIsLogoutConfirmationOpen] =
-    useState(false)
+  const [isCreating, setIsCreating] = useState(false)
 
-  const handleLogout = async () => {
-    await authClient
-      .signOut()
-      .then(async () => {
-        ;(toast.add({
-          type: TOAST_TYPES.success,
-          title: "Logged out",
-        }),
-          await router.invalidate(),
-          navigate({
-            to: "/login",
-          }))
-      })
-      .catch(() =>
-        toast.add({
-          type: TOAST_TYPES.error,
-          title: "Something went wrong",
-        })
-      )
+  const handleCreateForm = async () => {
+    if (isCreating) return
+    setIsCreating(true)
+    try {
+      const created = await createBlankForm()
+      await navigate({ to: "/forms/$formId", params: { formId: created.id } })
+    } catch {
+      toast.add({ type: TOAST_TYPES.error, title: "Could not create form" })
+      setIsCreating(false)
+    }
   }
 
   return (
-    <>
-      <Card className="max-w-sm w-full mx-auto">
-        <CardHeader>
-          <CardTitle>Protected Page</CardTitle>
-          <CardTitle>Logged in as - {user.name}</CardTitle>
-          <CardDescription>{user.email}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-end">
-          <Button onClick={() => setIsLogoutConfirmationOpen(true)}>
-            Sign Out
-          </Button>
-        </CardContent>
-      </Card>
-      <ConfirmationDialog
-        open={isLogoutConfirmationOpen}
-        onOpenChange={setIsLogoutConfirmationOpen}
-        title="Are you sure you want to sign out?"
-        description="You'll be redirected to the login page after signing out."
-        confirmLabel="Sign Out"
-        onConfirm={handleLogout}
-      />
-    </>
+    <section className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">My forms</h2>
+        <Button onClick={handleCreateForm} disabled={isCreating}>
+          New form
+        </Button>
+      </div>
+      {forms.length === 0 ? (
+        <p className="text-muted-foreground">
+          You have no forms yet. Create one to get started.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {forms.map((f) => (
+            <li key={f.id}>
+              <Link
+                to="/forms/$formId"
+                params={{ formId: f.id }}
+                className="flex items-center justify-between rounded-md border p-3 hover:bg-muted"
+              >
+                <span>{f.title}</span>
+                <span className="text-sm capitalize text-muted-foreground">
+                  {f.status}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 

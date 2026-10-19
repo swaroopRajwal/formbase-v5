@@ -14,6 +14,7 @@ import { Route as _publicRouteImport } from './routes/__public'
 import { Route as _protectedDashboardRouteImport } from './routes/__protected/dashboard'
 import { Route as _publicIndexRouteImport } from './routes/__public/index'
 import { Route as _publicLoginRouteImport } from './routes/__public/login'
+import { Route as _protectedFormsFormIdRouteImport } from './routes/__protected/forms/$formId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const _protectedRoute = _protectedRouteImport.update({
@@ -39,6 +40,11 @@ const _publicLoginRoute = _publicLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => _publicRoute,
 } as any)
+const _protectedFormsFormIdRoute = _protectedFormsFormIdRouteImport.update({
+  id: '/forms/$formId',
+  path: '/forms/$formId',
+  getParentRoute: () => _protectedRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -49,12 +55,14 @@ export interface FileRoutesByFullPath {
   '/': typeof _publicIndexRoute
   '/dashboard': typeof _protectedDashboardRoute
   '/login': typeof _publicLoginRoute
+  '/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof _publicIndexRoute
   '/dashboard': typeof _protectedDashboardRoute
   '/login': typeof _publicLoginRoute
+  '/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -64,13 +72,14 @@ export interface FileRoutesById {
   '/__protected/dashboard': typeof _protectedDashboardRoute
   '/__public/login': typeof _publicLoginRoute
   '/__public/': typeof _publicIndexRoute
+  '/__protected/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/api/auth/$'
+  fullPaths: '/' | '/dashboard' | '/login' | '/forms/$formId' | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/api/auth/$'
+  to: '/' | '/dashboard' | '/login' | '/forms/$formId' | '/api/auth/$'
   id:
     | '__root__'
     | '/__protected'
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/__protected/dashboard'
     | '/__public/login'
     | '/__public/'
+    | '/__protected/forms/$formId'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -124,6 +134,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof _publicLoginRouteImport
       parentRoute: typeof _publicRoute
     }
+    '/__protected/forms/$formId': {
+      id: '/__protected/forms/$formId'
+      path: '/forms/$formId'
+      fullPath: '/forms/$formId'
+      preLoaderRoute: typeof _protectedFormsFormIdRouteImport
+      parentRoute: typeof _protectedRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -136,10 +153,12 @@ declare module '@tanstack/react-router' {
 
 interface _protectedRouteChildren {
   _protectedDashboardRoute: typeof _protectedDashboardRoute
+  _protectedFormsFormIdRoute: typeof _protectedFormsFormIdRoute
 }
 
 const _protectedRouteChildren: _protectedRouteChildren = {
   _protectedDashboardRoute: _protectedDashboardRoute,
+  _protectedFormsFormIdRoute: _protectedFormsFormIdRoute,
 }
 
 const _protectedRouteWithChildren = _protectedRoute._addFileChildren(
