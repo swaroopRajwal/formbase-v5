@@ -3,6 +3,7 @@ import { collectAnswers } from "@lib/forms/collectAnswers"
 import { submitForm } from "@lib/forms/formFns"
 import type { PublicField, PublicForm } from "@lib/forms/publicForm"
 import { browserTimeZone, parseDateTime } from "@lib/forms/parseDateTime"
+import { HONEYPOT_FIELD } from "@lib/forms/spamGuard"
 import { OTHER_CHOICE, otherTextKey } from "@lib/forms/submission"
 import { Button } from "@ui/button"
 import { Input } from "@ui/input"
@@ -223,6 +224,10 @@ const PublicFormPage = ({
         },
       })
       if (result.ok) setDone(true)
+      else if (result.rateLimited)
+        setFormError(
+          "Too many submissions. Please wait a minute and try again."
+        )
       else setErrors(result.errors)
     } catch {
       setFormError("Something went wrong. Please try again.")
@@ -259,6 +264,17 @@ const PublicFormPage = ({
             )}
           </div>
         ))}
+        <div aria-hidden="true" className="absolute -left-[9999px]">
+          <label>
+            {HONEYPOT_FIELD}
+            <input
+              type="text"
+              name={HONEYPOT_FIELD}
+              tabIndex={-1}
+              autoComplete="off"
+            />
+          </label>
+        </div>
         {formError && (
           <p role="alert" className="text-sm text-destructive">
             {formError}

@@ -10,6 +10,7 @@ import { fieldToRow } from "./fieldRows"
 import { saveFormSchema } from "./fieldSchemas"
 import { generatePublicId, nextStatus, type LifecycleAction } from "./lifecycle"
 import { toPublicForm } from "./publicForm"
+import { isHoneypotFilled, submitLimiter } from "./spamGuard"
 import { validateSubmission } from "./submission"
 
 const requireUserId = async () => {
@@ -209,6 +210,15 @@ export const getPublicForm = createServerFn({ method: "GET" })
     async ({ data }) => (await loadPublishedForm(data.publicId)).publicForm
   )
 
+const clientIp = () => {
+  const headers = getRequestHeaders()
+  return (
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    headers.get("x-real-ip") ||
+    "unknown"
+  )
+}
+
 // Public (no auth): validates answers against the Form as it is now and, if
 // valid, stores them with a snapshot of the Field labels/types. Invalid
 // answers come back as per-field errors, not a thrown error.
@@ -220,9 +230,18 @@ export const submitForm = createServerFn({ method: "POST" })
     })
   )
   .handler(async ({ data }) => {
+    if (!submitLimiter.take(`${data.publicId}:${clientIp()}`))
+      return { ok: false as const, rateLimited: true as const }
     const { formId, publicForm } = await loadPublishedForm(data.publicId)
+    // Bots that fill the hidden honeypot see success but nothing is stored.
+    if (isHoneypotFilled(data.answers)) return { ok: true as const }
     const result = validateSubmission(publicForm.fields, data.answers)
-    if (!result.ok) return { ok: false as const, errors: result.errors }
+    if (!result.ok)
+      return {
+        ok: false as const,
+        rateLimited: false as const,
+        errors: result.errors,
+      }
     await db.insert(submission).values({
       formId,
       answers: result.answers,

@@ -1,4 +1,5 @@
 import type { PublicField } from "./publicForm"
+import { HONEYPOT_FIELD } from "./spamGuard"
 import { otherTextKey } from "./submission"
 
 // Reads a browser form into the raw per-Field values the server validates.
@@ -7,7 +8,9 @@ export const collectAnswers = (
   fields: PublicField[],
   data: FormData
 ): Record<string, unknown> => {
-  const answers: Record<string, unknown> = {}
+  const answers: Record<string, unknown> = {
+    [HONEYPOT_FIELD]: data.get(HONEYPOT_FIELD) ?? "",
+  }
   for (const f of fields) {
     switch (f.type) {
       case "switch":
