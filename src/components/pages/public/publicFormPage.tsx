@@ -2,13 +2,14 @@ import PageWrapper from "@components/shared/pageWrapper"
 import { collectAnswers } from "@lib/forms/collectAnswers"
 import { submitForm } from "@lib/forms/formFns"
 import type { PublicField, PublicForm } from "@lib/forms/publicForm"
+import { browserTimeZone, parseDateTime } from "@lib/forms/parseDateTime"
 import { OTHER_CHOICE, otherTextKey } from "@lib/forms/submission"
 import { Button } from "@ui/button"
 import { Input } from "@ui/input"
 import { Label } from "@ui/label"
 import { Switch } from "@ui/switch"
 import { Textarea } from "@ui/textarea"
-import { useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 
 const nativeSelect =
   "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm dark:bg-input/30"
@@ -54,6 +55,62 @@ const Choices = ({
     {f.allowOther && <OtherText f={f} />}
   </div>
 )
+
+const formatInstant = (instant: string, timeZone: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    dateStyle: "full",
+    timeStyle: "short",
+    timeZone,
+  }).format(new Date(instant))
+
+// Natural-language entry: the text input is only for typing; the parsed UTC
+// instant and browser timezone travel in hidden inputs. Text that can't be
+// parsed blocks submit through the input's validity message.
+const DateTimeControl = ({ f }: { f: PublicField }) => {
+  const [text, setText] = useState("")
+  const ref = useRef<HTMLInputElement>(null)
+  const parsed = text.trim() === "" ? null : parseDateTime(text)
+  const unparseable = text.trim() !== "" && !parsed
+
+  useEffect(() => {
+    ref.current?.setCustomValidity(
+      unparseable ? "Couldn't understand that date and time" : ""
+    )
+  }, [unparseable])
+
+  return (
+    <>
+      <Input
+        ref={ref}
+        id={f.id}
+        type="text"
+        required={f.required}
+        placeholder={f.placeholder ?? "e.g. Tomorrow 8pm"}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        aria-invalid={unparseable || undefined}
+      />
+      <input type="hidden" name={f.id} value={parsed?.instant ?? ""} />
+      <input
+        type="hidden"
+        name={`${f.id}.timezone`}
+        value={parsed?.timezone ?? ""}
+      />
+      {parsed && (
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          Understood as {formatInstant(parsed.instant, parsed.timezone)} (
+          {parsed.timezone})
+        </p>
+      )}
+      {unparseable && (
+        <p role="alert" className="text-xs text-destructive">
+          Couldn't understand that. Try something like "Tomorrow 8pm" or
+          "2026-12-25 09:00" ({browserTimeZone()} time).
+        </p>
+      )}
+    </>
+  )
+}
 
 const Control = ({ f }: { f: PublicField }) => {
   const common = {
@@ -111,13 +168,7 @@ const Control = ({ f }: { f: PublicField }) => {
     case "date":
       return <Input {...common} type="date" />
     case "datetime":
-      return (
-        <Input
-          {...common}
-          type="text"
-          placeholder={f.placeholder ?? "e.g. Tomorrow 8pm"}
-        />
-      )
+      return <DateTimeControl f={f} />
     case "date_range":
       return (
         <div className="grid grid-cols-2 gap-2">

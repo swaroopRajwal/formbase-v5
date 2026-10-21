@@ -247,18 +247,29 @@ describe("validateSubmission: dates", () => {
 
   it("accepts a Date time as an ISO instant and stores it as UTC", () => {
     const fields = [field({ type: "datetime" })]
-    expect(answersOf(fields, { f1: "2026-10-20T20:00:00+05:30" })).toEqual({
-      f1: "2026-10-20T14:30:00.000Z",
-    })
+    const timezone = "Asia/Kolkata"
+    expect(
+      answersOf(fields, {
+        f1: { instant: "2026-10-20T20:00:00+05:30", timezone },
+      })
+    ).toEqual({ f1: { instant: "2026-10-20T14:30:00.000Z", timezone } })
   })
 
   it("rejects an unparseable Date time rather than guessing", () => {
     const fields = [field({ type: "datetime" })]
-    expect(errorsOf(fields, { f1: "Tomorrow 8pm" }).f1).toMatch(
-      /date and time/i
-    )
-    // No zone: ambiguous, so not guessed.
-    expect(errorsOf(fields, { f1: "2026-10-20T20:00:00" }).f1).toBeDefined()
+    const timezone = "Asia/Kolkata"
+    expect(
+      errorsOf(fields, { f1: { instant: "Tomorrow 8pm", timezone } }).f1
+    ).toMatch(/date and time/i)
+    // No zone on the instant: ambiguous, so not guessed.
+    expect(
+      errorsOf(fields, { f1: { instant: "2026-10-20T20:00:00", timezone } }).f1
+    ).toBeDefined()
+    expect(
+      errorsOf(fields, {
+        f1: { instant: "2026-10-20T14:30:00Z", timezone: "Mars/Base" },
+      }).f1
+    ).toBeDefined()
   })
 
   it("accepts a Date range with end on or after start", () => {

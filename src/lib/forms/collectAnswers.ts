@@ -24,6 +24,12 @@ export const collectAnswers = (
           end: data.get(`${f.id}.end`) ?? "",
         }
         break
+      case "datetime":
+        answers[f.id] = {
+          instant: data.get(f.id) ?? "",
+          timezone: data.get(`${f.id}.timezone`) ?? "",
+        }
+        break
       case "radio":
       case "select":
         answers[f.id] = data.get(f.id) ?? ""

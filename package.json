@@ -39,6 +39,7 @@
     "@tanstack/react-router": "^1.170.44",
     "@tanstack/react-start": "^1.169.1",
     "better-auth": "^1.7.7",
+    "chrono-node": "^2.10.3",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
     "dotenv": "^18.0.7",

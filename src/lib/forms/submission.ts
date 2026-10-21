@@ -3,6 +3,8 @@ import { MAX_TEXT_ANSWER_LENGTH, type FieldType } from "./fieldSchemas"
 import type { PublicField } from "./publicForm"
 
 export type DateRangeAnswer = { start: string; end: string }
+// A Date time as a UTC instant plus the Respondent's IANA timezone.
+export type DateTimeAnswer = { instant: string; timezone: string }
 // A Respondent's free-text Other answer, kept distinct from any listed option
 // (even one with identical text).
 export type OtherAnswer = { other: string }
@@ -12,6 +14,7 @@ export type AnswerValue =
   | boolean
   | string[]
   | DateRangeAnswer
+  | DateTimeAnswer
   | OtherAnswer
   | (string | OtherAnswer)[]
 
@@ -163,18 +166,32 @@ const isCalendarDate = (value: unknown): value is string => {
 const checkDate = (_f: PublicField, raw: unknown): FieldCheck =>
   isCalendarDate(raw) ? { value: raw } : { error: "Enter a valid date" }
 
-// Natural-language entry ("Tomorrow 8pm") is a later ticket; until then only
-// an unambiguous ISO 8601 instant with a zone is accepted, never guessed.
+// The browser parses natural language ("Tomorrow 8pm") in the Respondent's
+// zone and sends the confirmed UTC instant plus that IANA zone. The server
+// never parses free text, so unparseable input is an error, never guessed.
 const ISO_INSTANT_RE =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/
 
+const isTimeZone = (value: unknown): value is string => {
+  if (typeof value !== "string" || value.trim() === "") return false
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: value })
+    return true
+  } catch {
+    return false
+  }
+}
+
 const checkDateTime = (_f: PublicField, raw: unknown): FieldCheck => {
+  const invalid = { error: "Enter a valid date and time" }
+  if (!isRecord(raw)) return invalid
+  const { instant, timezone } = raw
   const time =
-    typeof raw === "string" && ISO_INSTANT_RE.test(raw.trim())
-      ? Date.parse(raw.trim())
+    typeof instant === "string" && ISO_INSTANT_RE.test(instant.trim())
+      ? Date.parse(instant.trim())
       : NaN
-  if (Number.isNaN(time)) return { error: "Enter a valid date and time" }
-  return { value: new Date(time).toISOString() }
+  if (Number.isNaN(time) || !isTimeZone(timezone)) return invalid
+  return { value: { instant: new Date(time).toISOString(), timezone } }
 }
 
 const checkDateRange = (_f: PublicField, raw: unknown): FieldCheck => {
