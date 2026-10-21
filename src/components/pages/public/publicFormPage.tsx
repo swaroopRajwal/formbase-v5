@@ -1,5 +1,6 @@
 import PageWrapper from "@components/shared/pageWrapper"
 import { collectAnswers } from "@lib/forms/collectAnswers"
+import { diffFields, formVersion } from "@lib/forms/formChange"
 import { submitForm } from "@lib/forms/formFns"
 import type { PublicField, PublicForm } from "@lib/forms/publicForm"
 import { browserTimeZone, parseDateTime } from "@lib/forms/parseDateTime"
@@ -199,13 +200,26 @@ const Thanks = () => (
   </PageWrapper>
 )
 
+// Unchanged Fields keep their typed answers because their inputs stay mounted.
+// A Field remounts (dropping its answer) when its type changes, or, for
+// dropdowns, when its options change, since the browser would otherwise
+// silently pick another option.
+const fieldKey = (f: PublicField) =>
+  f.type === "select" || f.type === "multi_select"
+    ? `${f.id}:${f.type}:${f.allowOther}:${f.options.join("\u0000")}`
+    : `${f.id}:${f.type}`
+
+const NEW_REQUIRED = "This Field was added. Please answer it."
+
 const PublicFormPage = ({
-  form,
+  form: initialForm,
   publicId,
 }: {
   form: PublicForm
   publicId: string
 }) => {
+  const [form, setForm] = useState(initialForm)
+  const [updated, setUpdated] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -221,6 +235,7 @@ const PublicFormPage = ({
         data: {
           publicId,
           answers: collectAnswers(form.fields, new FormData(e.currentTarget)),
+          version: formVersion(form.fields),
         },
       })
       if (result.ok) setDone(true)
@@ -228,7 +243,16 @@ const PublicFormPage = ({
         setFormError(
           "Too many submissions. Please wait a minute and try again."
         )
-      else setErrors(result.errors)
+      else if (result.stale) {
+        const { added } = diffFields(form.fields, result.form.fields)
+        setUpdated(true)
+        setErrors(
+          Object.fromEntries(
+            added.filter((f) => f.required).map((f) => [f.id, NEW_REQUIRED])
+          )
+        )
+        setForm(result.form)
+      } else setErrors(result.errors)
     } catch {
       setFormError("Something went wrong. Please try again.")
     } finally {
@@ -246,9 +270,19 @@ const PublicFormPage = ({
           <p className="text-sm text-muted-foreground">{form.description}</p>
         )}
       </header>
+      {updated && (
+        <p
+          role="status"
+          className="rounded-lg border border-input bg-muted px-3 py-2 text-sm"
+        >
+          This form was updated while you were filling it, so nothing was
+          submitted. Your answers were kept where they still apply. Please
+          review the Fields below and submit again.
+        </p>
+      )}
       <form className="flex flex-col gap-5" onSubmit={onSubmit}>
         {form.fields.map((f) => (
-          <div key={f.id} className="flex flex-col gap-1.5">
+          <div key={fieldKey(f)} className="flex flex-col gap-1.5">
             <Label id={`${f.id}-label`} htmlFor={f.id}>
               {f.label}
               {f.required && <span className="text-destructive">*</span>}

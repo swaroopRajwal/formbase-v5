@@ -9,6 +9,7 @@ import { z } from "zod"
 import { fieldToRow } from "./fieldRows"
 import { saveFormSchema } from "./fieldSchemas"
 import { generatePublicId, nextStatus, type LifecycleAction } from "./lifecycle"
+import { formVersion } from "./formChange"
 import { toPublicForm } from "./publicForm"
 import { isHoneypotFilled, submitLimiter } from "./spamGuard"
 import { validateSubmission } from "./submission"
@@ -227,6 +228,8 @@ export const submitForm = createServerFn({ method: "POST" })
     z.object({
       publicId: z.string().min(1),
       answers: z.record(z.string(), z.unknown()),
+      // formVersion of the Fields the Respondent was shown.
+      version: z.string(),
     })
   )
   .handler(async ({ data }) => {
@@ -235,11 +238,21 @@ export const submitForm = createServerFn({ method: "POST" })
     const { formId, publicForm } = await loadPublishedForm(data.publicId)
     // Bots that fill the hidden honeypot see success but nothing is stored.
     if (isHoneypotFilled(data.answers)) return { ok: true as const }
+    // The Form changed while the Respondent was filling: nothing is stored;
+    // they get the new Fields to review and resubmit.
+    if (data.version !== formVersion(publicForm.fields))
+      return {
+        ok: false as const,
+        rateLimited: false as const,
+        stale: true as const,
+        form: publicForm,
+      }
     const result = validateSubmission(publicForm.fields, data.answers)
     if (!result.ok)
       return {
         ok: false as const,
         rateLimited: false as const,
+        stale: false as const,
         errors: result.errors,
       }
     await db.insert(submission).values({
