@@ -1,5 +1,6 @@
 import ConfirmationDialog from "@components/shared/confirmationDialog"
 import authClient from "@lib/auth/authClient"
+import { getInitials } from "@lib/auth/getInitials"
 import { TOAST_TYPES } from "@lib/constants/toast"
 import useGetCurrentUser from "@lib/hooks/useGetCurrentUser"
 import { IconLogout, IconSettings } from "@tabler/icons-react"
@@ -11,22 +12,11 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuLinkItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ui/dropdown-menu"
 import { toast } from "@ui/toast"
 import { useState } from "react"
-
-const getInitials = (name: string, email: string) => {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return (email[0] ?? "?").toUpperCase()
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase()
-}
 
 const Navbar = () => {
   const user = useGetCurrentUser()
@@ -78,14 +68,16 @@ const Navbar = () => {
               </DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuLinkItem render={<Link to="/settings" />}>
+            <DropdownMenuItem render={<Link to="/settings" />}>
               <IconSettings />
               Settings
-            </DropdownMenuLinkItem>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               variant="destructive"
-              onClick={() => setIsLogoutConfirmationOpen(true)}
+              onClick={() => {
+                setIsLogoutConfirmationOpen(true)
+              }}
             >
               <IconLogout />
               Log out
