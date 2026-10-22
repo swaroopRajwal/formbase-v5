@@ -9,7 +9,6 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "lint": "eslint",
-    "test": "vitest run",
     "format:write": "prettier --write \"**/*.{ts,tsx,js,jsx}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx}\"",
     "ui:add": "pnpm dlx shadcn@latest add",
@@ -64,7 +63,6 @@
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tsx": "^4.23.15",
     "typescript": "^6.0.2",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.4"
+    "vite": "^8.3.4"
   }
 }
