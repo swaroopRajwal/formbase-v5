@@ -3,7 +3,7 @@ import PageWrapper from "@components/shared/pageWrapper"
 import { listMyForms } from "@lib/forms/formFns"
 import { createFileRoute } from "@tanstack/react-router"
 
-export const Route = createFileRoute("/__protected/dashboard")({
+export const Route = createFileRoute("/__protected/__shell/dashboard")({
   loader: () => listMyForms(),
   component: RouteComponent,
 })

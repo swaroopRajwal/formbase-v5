@@ -5,7 +5,7 @@ import { Button } from "@ui/button"
 import { toast } from "@ui/toast"
 import { useState } from "react"
 
-const routeApi = getRouteApi("/__protected/dashboard")
+const routeApi = getRouteApi("/__protected/__shell/dashboard")
 
 const DashboardPage = () => {
   const forms = routeApi.useLoaderData()
