@@ -17,6 +17,7 @@ import { Route as _publicLoginRouteImport } from './routes/__public/login'
 import { Route as FPublicIdRouteImport } from './routes/f/$publicId'
 import { Route as _protectedFormsFormIdRouteImport } from './routes/__protected/forms/$formId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as _protectedFormsFormIdSubmissionsRouteImport } from './routes/__protected/forms/$formId_.submissions'
 
 const _protectedRoute = _protectedRouteImport.update({
   id: '/__protected',
@@ -56,6 +57,12 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const _protectedFormsFormIdSubmissionsRoute =
+  _protectedFormsFormIdSubmissionsRouteImport.update({
+    id: '/forms/$formId_/submissions',
+    path: '/forms/$formId/submissions',
+    getParentRoute: () => _protectedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof _publicIndexRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/f/$publicId': typeof FPublicIdRoute
   '/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/forms/$formId/submissions': typeof _protectedFormsFormIdSubmissionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof _publicIndexRoute
@@ -72,6 +80,7 @@ export interface FileRoutesByTo {
   '/f/$publicId': typeof FPublicIdRoute
   '/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/forms/$formId/submissions': typeof _protectedFormsFormIdSubmissionsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -83,6 +92,7 @@ export interface FileRoutesById {
   '/__public/': typeof _publicIndexRoute
   '/__protected/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/__protected/forms/$formId_/submissions': typeof _protectedFormsFormIdSubmissionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -93,6 +103,7 @@ export interface FileRouteTypes {
     | '/f/$publicId'
     | '/forms/$formId'
     | '/api/auth/$'
+    | '/forms/$formId/submissions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -101,6 +112,7 @@ export interface FileRouteTypes {
     | '/f/$publicId'
     | '/forms/$formId'
     | '/api/auth/$'
+    | '/forms/$formId/submissions'
   id:
     | '__root__'
     | '/__protected'
@@ -111,6 +123,7 @@ export interface FileRouteTypes {
     | '/__public/'
     | '/__protected/forms/$formId'
     | '/api/auth/$'
+    | '/__protected/forms/$formId_/submissions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -178,17 +191,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/__protected/forms/$formId_/submissions': {
+      id: '/__protected/forms/$formId_/submissions'
+      path: '/forms/$formId/submissions'
+      fullPath: '/forms/$formId/submissions'
+      preLoaderRoute: typeof _protectedFormsFormIdSubmissionsRouteImport
+      parentRoute: typeof _protectedRoute
+    }
   }
 }
 
 interface _protectedRouteChildren {
   _protectedDashboardRoute: typeof _protectedDashboardRoute
   _protectedFormsFormIdRoute: typeof _protectedFormsFormIdRoute
+  _protectedFormsFormIdSubmissionsRoute: typeof _protectedFormsFormIdSubmissionsRoute
 }
 
 const _protectedRouteChildren: _protectedRouteChildren = {
   _protectedDashboardRoute: _protectedDashboardRoute,
   _protectedFormsFormIdRoute: _protectedFormsFormIdRoute,
+  _protectedFormsFormIdSubmissionsRoute: _protectedFormsFormIdSubmissionsRoute,
 }
 
 const _protectedRouteWithChildren = _protectedRoute._addFileChildren(

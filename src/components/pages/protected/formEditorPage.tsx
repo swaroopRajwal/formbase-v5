@@ -282,6 +282,7 @@ const FormEditorPage = () => {
         noValidate
       >
         <EditorHeader
+          formId={loaded.id}
           status={loaded.status}
           publicId={loaded.publicId}
           changingStatus={changingStatus}

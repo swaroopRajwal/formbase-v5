@@ -29,6 +29,29 @@ function DialogContent({ className, ...props }: DialogPrimitive.Popup.Props) {
   )
 }
 
+// Side panel flush to the right edge, full height, sliding in from the right.
+function DialogDrawerContent({
+  className,
+  ...props
+}: DialogPrimitive.Popup.Props) {
+  return (
+    <DialogPrimitive.Portal data-slot="dialog-portal">
+      <DialogPrimitive.Backdrop
+        data-slot="dialog-overlay"
+        className="fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
+      />
+      <DialogPrimitive.Popup
+        data-slot="dialog-drawer"
+        className={cn(
+          "fixed inset-y-0 right-0 z-50 flex h-full w-full max-w-lg flex-col gap-4 overflow-y-auto bg-popover p-5 text-popover-foreground ring-1 ring-foreground/10 duration-200 outline-none data-open:animate-in data-open:slide-in-from-right data-closed:animate-out data-closed:slide-out-to-right",
+          className
+        )}
+        {...props}
+      />
+    </DialogPrimitive.Portal>
+  )
+}
+
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -77,6 +100,7 @@ export {
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogDrawerContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,

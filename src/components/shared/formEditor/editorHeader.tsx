@@ -24,6 +24,7 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 type Props = {
+  formId: string
   status: "unpublished" | "published"
   publicId: string | null
   changingStatus: boolean
@@ -36,6 +37,7 @@ type Props = {
 }
 
 const EditorHeader = ({
+  formId,
   status,
   publicId,
   changingStatus,
@@ -116,6 +118,13 @@ const EditorHeader = ({
         <span className="hidden text-xs text-muted-foreground sm:inline">
           {fieldCount} / {MAX_FIELDS_PER_FORM} fields
         </span>
+        <Link
+          to="/forms/$formId/submissions"
+          params={{ formId }}
+          className={buttonVariants({ variant: "outline" })}
+        >
+          Submissions
+        </Link>
         {status === "published" && publicId && (
           <Button type="button" variant="outline" onClick={copyLink}>
             {copied ? <IconCheck /> : <IconLink />}

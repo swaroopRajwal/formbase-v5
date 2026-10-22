@@ -13,6 +13,7 @@ import { formVersion } from "./formChange"
 import { toPublicForm } from "./publicForm"
 import { isHoneypotFilled, submitLimiter } from "./spamGuard"
 import { validateSubmission } from "./submission"
+import { buildColumns } from "./submissionsTable"
 
 const requireUserId = async () => {
   const session = await auth.api.getSession({ headers: getRequestHeaders() })
@@ -51,6 +52,16 @@ export const createBlankForm = createServerFn({ method: "POST" }).handler(
   }
 )
 
+// The Creator's own Form, or notFound for a missing or someone else's Form.
+const findOwnedForm = async (userId: string, formId: string) => {
+  const [found] = await db
+    .select({ ...formSummary, description: form.description })
+    .from(form)
+    .where(and(eq(form.id, formId), eq(form.userId, userId)))
+  if (!found) throw notFound()
+  return found
+}
+
 // Another Creator's Form is indistinguishable from a missing one.
 export const getMyForm = createServerFn({ method: "GET" })
   .validator(z.object({ formId: z.string().min(1) }))
@@ -68,20 +79,48 @@ export const getMyFormWithFields = createServerFn({ method: "GET" })
   .validator(z.object({ formId: z.string().min(1) }))
   .handler(async ({ data }) => {
     const userId = await requireUserId()
-    const [found] = await db
-      .select({
-        ...formSummary,
-        description: form.description,
-      })
-      .from(form)
-      .where(and(eq(form.id, data.formId), eq(form.userId, userId)))
-    if (!found) throw notFound()
+    const found = await findOwnedForm(userId, data.formId)
     const fields = await db
       .select()
       .from(field)
       .where(eq(field.formId, found.id))
       .orderBy(asc(field.position))
     return { ...found, fields }
+  })
+
+// Creator-only: the Form's Submissions (newest first) with one column per
+// Field seen in any snapshot, so removed Fields still show. Another Creator's
+// Form is indistinguishable from a missing one.
+export const getMySubmissions = createServerFn({ method: "GET" })
+  .validator(z.object({ formId: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const userId = await requireUserId()
+    const found = await findOwnedForm(userId, data.formId)
+    const [currentFields, rows] = await Promise.all([
+      db
+        .select({ id: field.id })
+        .from(field)
+        .where(eq(field.formId, found.id))
+        .orderBy(asc(field.position)),
+      db
+        .select()
+        .from(submission)
+        .where(eq(submission.formId, found.id))
+        .orderBy(desc(submission.createdAt)),
+    ])
+    return {
+      form: found,
+      columns: buildColumns(
+        rows,
+        currentFields.map((f) => f.id)
+      ),
+      submissions: rows.map((r) => ({
+        id: r.id,
+        createdAt: r.createdAt.toISOString(),
+        answers: r.answers,
+        snapshot: r.snapshot,
+      })),
+    }
   })
 
 // Replaces the Form's title, description and ordered Fields. Fields with an
