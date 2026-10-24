@@ -60,6 +60,10 @@ const SORT_COLUMNS = {
   submissions: submissionCount,
 }
 
+// Escapes LIKE wildcards so the search is a literal substring match.
+const titleContains = (q: string) =>
+  sql`lower(${form.title}) like ${`%${q.toLowerCase().replace(/[\\%_]/g, "\\$&")}%`} escape '\\'`
+
 // One page of the Creator's Forms, sorted on the server with `id` as the
 // stable tie-breaker. `hasAnyForms` tells "no Forms yet" from "no matches".
 export const listMyForms = createServerFn({ method: "GET" })
@@ -67,8 +71,13 @@ export const listMyForms = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const userId = await requireUserId()
     const owned = eq(form.userId, userId)
+    const matching = and(
+      owned,
+      data.q ? titleContains(data.q) : undefined,
+      data.status === "all" ? undefined : eq(form.status, data.status)
+    )
     const direction = data.dir === "asc" ? asc : desc
-    const [rows, [counted]] = await Promise.all([
+    const [rows, [counted], [anyForm]] = await Promise.all([
       db
         .select({
           ...formSummary,
@@ -77,14 +86,18 @@ export const listMyForms = createServerFn({ method: "GET" })
           submissionCount,
         })
         .from(form)
-        .where(owned)
+        .where(matching)
         .orderBy(direction(SORT_COLUMNS[data.sort]), asc(form.id))
         .limit(data.pageSize)
         .offset((data.page - 1) * data.pageSize),
-      db.select({ total: count() }).from(form).where(owned),
+      db.select({ total: count() }).from(form).where(matching),
+      db.select({ id: form.id }).from(form).where(owned).limit(1),
     ])
-    const total = counted?.total ?? 0
-    return { rows, total, hasAnyForms: total > 0 }
+    return {
+      rows,
+      total: counted?.total ?? 0,
+      hasAnyForms: anyForm !== undefined,
+    }
   })
 
 export const createBlankForm = createServerFn({ method: "POST" }).handler(

@@ -8,9 +8,11 @@ export const SORT_KEYS = [
   "submissions",
 ] as const
 export const PAGE_SIZES = [10, 25, 50] as const
+export const STATUS_FILTERS = ["all", "published", "unpublished"] as const
 
 export type SortKey = (typeof SORT_KEYS)[number]
 export type SortDir = "asc" | "desc"
+export type StatusFilter = (typeof STATUS_FILTERS)[number]
 
 export const DEFAULT_SORT: SortKey = "updatedAt"
 export const DEFAULT_DIR: SortDir = "desc"
@@ -25,6 +27,8 @@ export const formsTableSearchSchema = z.object({
     .pipe(z.union([z.literal(10), z.literal(25), z.literal(50)]))
     .catch(10)
     .default(10),
+  q: z.string().trim().max(100).catch("").default(""),
+  status: z.enum(STATUS_FILTERS).catch("all").default("all"),
 })
 
 export type FormsTableSearch = z.infer<typeof formsTableSearchSchema>

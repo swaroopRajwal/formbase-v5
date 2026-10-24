@@ -1,10 +1,12 @@
 import { TOAST_TYPES } from "@lib/constants/toast"
 import {
   PAGE_SIZES,
+  STATUS_FILTERS,
   nextSort,
   pageCount,
   type FormsTableSearch,
   type SortKey,
+  type StatusFilter,
 } from "@lib/forms/formsTableSearch"
 import type { listMyForms } from "@lib/forms/formFns"
 import {
@@ -52,7 +54,9 @@ import {
   TableRow,
 } from "@ui/table"
 import { toast } from "@ui/toast"
+import { Input } from "@ui/input"
 import { cn } from "cn"
+import { useEffect, useState } from "react"
 
 type FormRow = Awaited<ReturnType<typeof listMyForms>>["rows"][number]
 
@@ -164,6 +168,62 @@ const columns = helper.columns([
   }),
 ])
 
+const STATUS_LABELS: Record<StatusFilter, string> = {
+  all: "All statuses",
+  published: "Published",
+  unpublished: "Unpublished",
+}
+
+const SEARCH_DEBOUNCE_MS = 300
+
+const FilterBar = ({
+  search,
+  update,
+}: {
+  search: FormsTableSearch
+  update: (next: Partial<FormsTableSearch>) => unknown
+}) => {
+  const [text, setText] = useState(search.q)
+
+  // Follows the URL when it changes elsewhere (Back, Clear filters).
+  useEffect(() => setText(search.q), [search.q])
+
+  useEffect(() => {
+    const q = text.trim()
+    if (q === search.q) return
+    const timer = setTimeout(() => update({ q, page: 1 }), SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [text, search.q, update])
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Input
+        type="search"
+        aria-label="Search forms by title"
+        placeholder="Search by title"
+        className="max-w-xs"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <Select
+        value={search.status}
+        onValueChange={(v) => update({ status: v as StatusFilter, page: 1 })}
+      >
+        <SelectTrigger aria-label="Filter by status" className="w-40">
+          <SelectValue>{(v: StatusFilter) => STATUS_LABELS[v]}</SelectValue>
+        </SelectTrigger>
+        <SelectContent alignItemWithTrigger={false}>
+          {STATUS_FILTERS.map((s) => (
+            <SelectItem key={s} value={s}>
+              {STATUS_LABELS[s]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
 const SortIcon = ({ dir }: { dir: false | "asc" | "desc" }) =>
   dir === "asc" ? (
     <IconArrowUp className="size-4" />
@@ -200,76 +260,89 @@ const FormsTable = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <div
-        className={cn(
-          "rounded-lg border transition-opacity",
-          isLoading && "opacity-50"
-        )}
-      >
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((group) => (
-              <TableRow key={group.id}>
-                {group.headers.map((header) => {
-                  const id = header.column.id
-                  const sortable = id !== "actions"
-                  const dir = search.sort === id && search.dir
-                  return (
-                    <TableHead
-                      key={header.id}
-                      aria-sort={
-                        dir === "asc"
-                          ? "ascending"
-                          : dir === "desc"
-                            ? "descending"
-                            : undefined
-                      }
-                    >
-                      {sortable ? (
-                        <button
-                          type="button"
-                          className="flex items-center gap-1"
-                          onClick={() =>
-                            update({
-                              ...nextSort(search, id as SortKey),
-                              page: 1,
-                            })
-                          }
-                        >
+      <FilterBar search={search} update={update} />
+      {total === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-lg border py-10">
+          <p className="text-muted-foreground">No forms match your filters</p>
+          <Button
+            variant="outline"
+            onClick={() => update({ q: "", status: "all", page: 1 })}
+          >
+            Clear filters
+          </Button>
+        </div>
+      ) : (
+        <div
+          className={cn(
+            "rounded-lg border transition-opacity",
+            isLoading && "opacity-50"
+          )}
+        >
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((group) => (
+                <TableRow key={group.id}>
+                  {group.headers.map((header) => {
+                    const id = header.column.id
+                    const sortable = id !== "actions"
+                    const dir = search.sort === id && search.dir
+                    return (
+                      <TableHead
+                        key={header.id}
+                        aria-sort={
+                          dir === "asc"
+                            ? "ascending"
+                            : dir === "desc"
+                              ? "descending"
+                              : undefined
+                        }
+                      >
+                        {sortable ? (
+                          <button
+                            type="button"
+                            className="flex items-center gap-1"
+                            onClick={() =>
+                              update({
+                                ...nextSort(search, id as SortKey),
+                                page: 1,
+                              })
+                            }
+                          >
+                            <table.FlexRender header={header} />
+                            <SortIcon dir={dir} />
+                          </button>
+                        ) : (
                           <table.FlexRender header={header} />
-                          <SortIcon dir={dir} />
-                        </button>
-                      ) : (
-                        <table.FlexRender header={header} />
-                      )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                className="cursor-pointer"
-                onClick={() =>
-                  navigate({
-                    to: "/forms/$formId",
-                    params: { formId: row.original.id },
-                  })
-                }
-              >
-                {row.getAllCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    <table.FlexRender cell={cell} />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+                        )}
+                      </TableHead>
+                    )
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer"
+                  onClick={() =>
+                    navigate({
+                      to: "/forms/$formId",
+                      params: { formId: row.original.id },
+                    })
+                  }
+                >
+                  {row.getAllCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      <table.FlexRender cell={cell} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
       {pages > 1 ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Select
