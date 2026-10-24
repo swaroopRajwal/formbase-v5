@@ -4,10 +4,20 @@ import { auth } from "@lib/auth"
 import { notFound, redirect } from "@tanstack/react-router"
 import { createServerFn } from "@tanstack/react-start"
 import { getRequestHeaders } from "@tanstack/react-start/server"
-import { and, asc, desc, eq, inArray, notInArray } from "drizzle-orm"
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  inArray,
+  notInArray,
+  sql,
+} from "drizzle-orm"
 import { z } from "zod"
 import { fieldToRow } from "./fieldRows"
 import { saveFormSchema } from "./fieldSchemas"
+import { formsTableSearchSchema } from "./formsTableSearch"
 import { generatePublicId, nextStatus, type LifecycleAction } from "./lifecycle"
 import { formVersion } from "./formChange"
 import { toPublicForm } from "./publicForm"
@@ -29,16 +39,53 @@ const formSummary = {
   updatedAt: form.updatedAt,
 }
 
-export const listMyForms = createServerFn({ method: "GET" }).handler(
-  async () => {
+// Drizzle drops table qualifiers in single-table queries, so the outer
+// `form.id` would resolve to the inner table's own `id`. Qualify it by hand.
+const countRelated = (
+  table: typeof field | typeof submission,
+  formId: typeof field.formId | typeof submission.formId
+) =>
+  sql<number>`(select count(*) from ${table} where ${formId} = "form"."id")`.mapWith(
+    Number
+  )
+
+const fieldCount = countRelated(field, field.formId)
+const submissionCount = countRelated(submission, submission.formId)
+
+const SORT_COLUMNS = {
+  title: sql`lower(${form.title})`,
+  createdAt: form.createdAt,
+  updatedAt: form.updatedAt,
+  fields: fieldCount,
+  submissions: submissionCount,
+}
+
+// One page of the Creator's Forms, sorted on the server with `id` as the
+// stable tie-breaker. `hasAnyForms` tells "no Forms yet" from "no matches".
+export const listMyForms = createServerFn({ method: "GET" })
+  .validator(formsTableSearchSchema)
+  .handler(async ({ data }) => {
     const userId = await requireUserId()
-    return db
-      .select(formSummary)
-      .from(form)
-      .where(eq(form.userId, userId))
-      .orderBy(desc(form.updatedAt))
-  }
-)
+    const owned = eq(form.userId, userId)
+    const direction = data.dir === "asc" ? asc : desc
+    const [rows, [counted]] = await Promise.all([
+      db
+        .select({
+          ...formSummary,
+          createdAt: form.createdAt,
+          fieldCount,
+          submissionCount,
+        })
+        .from(form)
+        .where(owned)
+        .orderBy(direction(SORT_COLUMNS[data.sort]), asc(form.id))
+        .limit(data.pageSize)
+        .offset((data.page - 1) * data.pageSize),
+      db.select({ total: count() }).from(form).where(owned),
+    ])
+    const total = counted?.total ?? 0
+    return { rows, total, hasAnyForms: total > 0 }
+  })
 
 export const createBlankForm = createServerFn({ method: "POST" }).handler(
   async () => {

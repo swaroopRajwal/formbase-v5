@@ -68,7 +68,6 @@ export const answerText = (
 export const truncate = (text: string, max: number) =>
   text.length <= max ? text : `${text.slice(0, max - 1)}…`
 
-
 // Submission timestamp in a fixed, locale-independent format: "YYYY-MM-DD HH:mm UTC".
 export const formatSubmitted = (iso: string) =>
   `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`

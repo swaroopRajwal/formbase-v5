@@ -23,8 +23,7 @@ const FakeInput = ({
   </div>
 )
 
-const optionLabels = (f: EditorField) =>
-  f.options.map((o) => o.value.trim())
+const optionLabels = (f: EditorField) => f.options.map((o) => o.value.trim())
 
 const Choices = ({
   f,

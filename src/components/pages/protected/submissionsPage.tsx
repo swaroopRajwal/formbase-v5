@@ -22,7 +22,9 @@ const routeApi = getRouteApi("/__protected/forms/$formId_/submissions")
 const CELL_MAX = 60
 
 const downloadCsv = (title: string, csv: string) => {
-  const url = URL.createObjectURL(new Blob([CSV_BOM + csv], { type: "text/csv;charset=utf-8" }))
+  const url = URL.createObjectURL(
+    new Blob([CSV_BOM + csv], { type: "text/csv;charset=utf-8" })
+  )
   const a = document.createElement("a")
   a.href = url
   a.download = `${title.replace(/[^\w-]+/g, "_") || "submissions"}.csv`

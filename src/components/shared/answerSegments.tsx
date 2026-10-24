@@ -12,11 +12,7 @@ const AnswerSegments = ({
   segments.map((seg, i) => (
     <span key={i} className={inline ? undefined : "block"}>
       {inline && i > 0 && ", "}
-      {seg.other ? (
-        <span className="italic">Other: {seg.text}</span>
-      ) : (
-        seg.text
-      )}
+      {seg.other ? <span className="italic">Other: {seg.text}</span> : seg.text}
     </span>
   ))
 
