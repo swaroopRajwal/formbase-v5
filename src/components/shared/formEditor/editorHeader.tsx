@@ -18,11 +18,12 @@ import { cn } from "cn"
 import { useEffect, useRef, useState } from "react"
 import { Controller, useFormContext } from "react-hook-form"
 import AppTooltip from "../appTooltip"
+import { Badge } from "@ui/badge"
 
-const STATUS_STYLES: Record<string, string> = {
-  unpublished: "bg-muted text-muted-foreground",
-  published: "bg-emerald-500/15 text-emerald-500",
-}
+// const STATUS_STYLES: Record<string, string> = {
+//   unpublished: "bg-muted text-muted-foreground",
+//   published: "bg-emerald-500/15 text-emerald-500",
+// }
 
 type Props = {
   formId: string
@@ -91,14 +92,12 @@ const EditorHeader = ({
             />
           )}
         />
-        <span
-          className={cn(
-            "rounded-full px-2 py-0.5 text-xs font-medium capitalize",
-            STATUS_STYLES[status]
-          )}
+        <Badge
+          className="capitalize"
+          variant={status === "published" ? "success" : "warning"}
         >
           {status}
-        </span>
+        </Badge>
 
         <div className="ml-auto flex items-center gap-3">
           {dirty && (
