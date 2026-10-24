@@ -39,17 +39,15 @@ const PaletteItem = ({ type, disabled, onAdd }: ItemProps) => {
         listeners?.onPointerDown as React.PointerEventHandler | undefined
       }
       className={cn(
-        "flex w-full touch-none items-center gap-3 rounded-lg border bg-card p-2.5 text-left transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
+        "flex w-full touch-none flex-col items-start gap-1 rounded-lg border bg-card p-3 text-left transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50",
         isDragging && "opacity-40"
       )}
     >
-      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-        <Icon className="size-4" />
+      <span className="flex items-center gap-2 text-sm font-medium">
+        <Icon className="size-4 shrink-0" />
+        {FIELD_TYPE_LABELS[type]}
       </span>
-      <span className="flex min-w-0 flex-col">
-        <span className="text-sm font-medium">{FIELD_TYPE_LABELS[type]}</span>
-        <span className="text-xs text-muted-foreground">{description}</span>
-      </span>
+      <span className="text-xs text-muted-foreground">{description}</span>
     </button>
   )
 }
@@ -60,25 +58,17 @@ type Props = {
 }
 
 const FieldPalette = ({ atCap, onAdd }: Props) => (
-  <div className="flex flex-col gap-5 p-4">
-    <div className="flex flex-col gap-1">
-      <h2 className="text-sm font-semibold">Fields</h2>
+  <div className="flex flex-col gap-3">
+    {atCap && (
       <p className="text-xs text-muted-foreground">
-        {atCap
-          ? `Max ${MAX_FIELDS_PER_FORM} fields reached`
-          : "Click or drag a field into your form"}
+        Max {MAX_FIELDS_PER_FORM} fields reached
       </p>
+    )}
+    <div className="grid grid-cols-2 gap-2">
+      {FIELD_TYPE_GROUPS.flatMap((g) => g.types).map((t) => (
+        <PaletteItem key={t} type={t} disabled={atCap} onAdd={onAdd} />
+      ))}
     </div>
-    {FIELD_TYPE_GROUPS.map((g) => (
-      <div key={g.label} className="flex flex-col gap-2">
-        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {g.label}
-        </h3>
-        {g.types.map((t) => (
-          <PaletteItem key={t} type={t} disabled={atCap} onAdd={onAdd} />
-        ))}
-      </div>
-    ))}
   </div>
 )
 

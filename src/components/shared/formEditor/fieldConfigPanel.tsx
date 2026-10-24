@@ -5,7 +5,7 @@ import {
   type FieldSetting,
 } from "@lib/forms/editorModel"
 import { MAX_OPTIONS_PER_FIELD } from "@lib/forms/fieldSchemas"
-import { IconPlus, IconPointer, IconX } from "@tabler/icons-react"
+import { IconPlus, IconPointer, IconTrash, IconX } from "@tabler/icons-react"
 import { Button } from "@ui/button"
 import { Checkbox } from "@ui/checkbox"
 import { Field, FieldError, FieldLabel } from "@ui/field"
@@ -17,10 +17,9 @@ import {
   useWatch,
   type FieldError as RhfFieldError,
 } from "react-hook-form"
-import { FIELD_TYPE_META } from "./fieldTypeMeta"
 
 export const FieldConfigEmpty = ({ hasFields }: { hasFields: boolean }) => (
-  <div className="flex h-full items-center p-4">
+  <div className="rounded-xl border bg-card p-4">
     <div className="flex w-full flex-col items-center gap-2 rounded-xl border border-dashed p-6 text-center">
       <IconPointer className="size-6 text-muted-foreground" />
       <p className="text-sm font-medium">No field selected</p>
@@ -33,28 +32,33 @@ export const FieldConfigEmpty = ({ hasFields }: { hasFields: boolean }) => (
   </div>
 )
 
-const FieldConfigPanel = ({ index }: { index: number }) => {
+const FieldConfigPanel = ({
+  index,
+  onRemove,
+}: {
+  index: number
+  onRemove: () => void
+}) => {
   const { control, register, formState } = useFormContext<EditorValues>()
   const errors = formState.errors.fields?.[index]
   const type = useWatch({ control, name: `fields.${index}.type` })
   const shows = (s: FieldSetting) => SETTINGS_BY_TYPE[type].includes(s)
   const id = (name: string) => `fields-${index}-${name}`
-  const { icon: TypeIcon } = FIELD_TYPE_META[type]
 
   return (
-    <div className="flex flex-col gap-4 p-4">
-      <div className="flex items-center gap-3">
-        <span className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
-          <TypeIcon className="size-4" />
-        </span>
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold">
-            {FIELD_TYPE_LABELS[type]} field
-          </span>
-          <span className="text-xs text-muted-foreground">
-            Field {index + 1}
-          </span>
-        </div>
+    <div className="flex flex-col gap-4 rounded-xl border bg-card p-4">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-semibold">{FIELD_TYPE_LABELS[type]}</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Remove field"
+          className="text-muted-foreground hover:text-destructive"
+          onClick={onRemove}
+        >
+          <IconTrash />
+        </Button>
       </div>
 
       <Field data-invalid={!!errors?.label}>

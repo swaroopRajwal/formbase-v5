@@ -20,25 +20,28 @@ export const FIELD_TYPE_META: Record<
   FieldType,
   { icon: Icon; description: string }
 > = {
-  short: { icon: IconTextCaption, description: "Single-line text answer" },
-  paragraph: { icon: IconAlignLeft, description: "Multi-line text answer" },
-  number: { icon: IconNumber, description: "Numeric answer" },
-  url: { icon: IconLink, description: "Web address answer" },
-  email: { icon: IconMail, description: "Email address answer" },
-  radio: { icon: IconCircleDot, description: "Pick exactly one option" },
-  checkbox: { icon: IconSquareCheck, description: "Pick one or more options" },
-  switch: { icon: IconToggleRight, description: "On/off answer" },
-  select: { icon: IconSelector, description: "Dropdown, pick one option" },
+  short: { icon: IconTextCaption, description: "Single line of text" },
+  paragraph: { icon: IconAlignLeft, description: "Longer, multi-line text" },
+  number: { icon: IconNumber, description: "Numeric values" },
+  url: { icon: IconLink, description: "Collect a website URL" },
+  email: { icon: IconMail, description: "Collect an email address" },
+  radio: { icon: IconCircleDot, description: "Choose one option" },
+  checkbox: { icon: IconSquareCheck, description: "Select multiple options" },
+  switch: { icon: IconToggleRight, description: "Toggle on or off" },
+  select: { icon: IconSelector, description: "Pick one from a dropdown" },
   multi_select: {
     icon: IconListCheck,
-    description: "Dropdown, pick many options",
+    description: "Pick several from a list",
   },
-  date: { icon: IconCalendar, description: "A single calendar date" },
+  date: { icon: IconCalendar, description: "Pick a single date" },
   datetime: {
     icon: IconCalendarTime,
-    description: "Date and time, typed naturally",
+    description: "Pick a date and time",
   },
-  date_range: { icon: IconCalendarStats, description: "Start and end dates" },
+  date_range: {
+    icon: IconCalendarStats,
+    description: "Pick a start and end date",
+  },
 }
 
 export const FIELD_TYPE_GROUPS: { label: string; types: FieldType[] }[] = [

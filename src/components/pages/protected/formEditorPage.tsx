@@ -46,7 +46,6 @@ import {
 import type { LifecycleAction } from "@lib/forms/lifecycle"
 import { getRouteApi, useBlocker, useRouter } from "@tanstack/react-router"
 import { toast } from "@ui/toast"
-import { cn } from "cn"
 import { useCallback, useEffect, useRef, useState } from "react"
 import {
   FormProvider,
@@ -120,7 +119,6 @@ const FormEditorPage = () => {
 
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [drawer, setDrawer] = useState<"palette" | "config" | null>(null)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [dropIndex, setDropIndex] = useState<number | null>(null)
   const atCap = fields.length >= MAX_FIELDS_PER_FORM
@@ -148,7 +146,6 @@ const FormEditorPage = () => {
       if (fields.length >= MAX_FIELDS_PER_FORM) return
       pendingSelect.current = at
       insert(at, blankField(type))
-      setDrawer(null)
     },
     [fields.length, insert]
   )
@@ -194,7 +191,6 @@ const FormEditorPage = () => {
       invalid.length + (errs.title ? 1 : 0) + (errs.description ? 1 : 0)
     if (invalid.length) {
       setSelectedKey(keys[invalid[0]!] ?? null)
-      setDrawer("config")
     } else if (errs.description && !errs.title) {
       setSettingsOpen(true)
     }
@@ -276,11 +272,7 @@ const FormEditorPage = () => {
 
   return (
     <FormProvider {...form}>
-      <form
-        className="flex h-screen flex-col overflow-hidden"
-        onSubmit={submit}
-        noValidate
-      >
+      <form className="flex min-h-screen flex-col" onSubmit={submit} noValidate>
         <EditorHeader
           formId={loaded.id}
           status={loaded.status}
@@ -291,9 +283,6 @@ const FormEditorPage = () => {
           dirty={isDirty}
           saving={isSubmitting}
           onOpenSettings={() => setSettingsOpen(true)}
-          onTogglePalette={() =>
-            setDrawer((d) => (d === "palette" ? null : "palette"))
-          }
         />
 
         <DndContext
@@ -305,45 +294,28 @@ const FormEditorPage = () => {
           onDragEnd={onDragEnd}
           onDragCancel={clearDrag}
         >
-          <div className="relative flex min-h-0 flex-1">
-            <aside
-              className={cn(
-                "w-72 shrink-0 overflow-y-auto border-r bg-background",
-                drawer === "palette"
-                  ? "absolute inset-y-0 left-0 z-10 shadow-xl lg:static lg:shadow-none"
-                  : "hidden lg:block"
-              )}
-            >
+          <div className="mx-auto grid w-full max-w-7xl flex-1 grid-cols-[minmax(0,5fr)_minmax(0,5fr)_minmax(0,4fr)] items-start gap-6 p-6">
+            <aside className="sticky top-20 max-h-[calc(100vh-6.5rem)] overflow-y-auto">
               <FieldPalette atCap={atCap} onAdd={(t) => addField(t)} />
             </aside>
 
-            <main className="min-w-0 flex-1 overflow-y-auto bg-muted/30">
+            <main className="min-w-0">
               <FieldCanvas
                 keys={keys}
                 selectedKey={selectedKey}
                 dropIndex={dropIndex}
                 fieldsError={[errors.fields?.root ?? errors.fields]}
-                onSelect={(k) => {
-                  setSelectedKey(k)
-                  if (k) setDrawer("config")
-                  else setDrawer(null)
-                }}
+                onSelect={setSelectedKey}
                 onRemove={removeField}
               />
             </main>
 
-            <aside
-              className={cn(
-                "w-80 shrink-0 overflow-y-auto border-l bg-background",
-                drawer === "config"
-                  ? "absolute inset-y-0 right-0 z-10 shadow-xl lg:static lg:shadow-none"
-                  : "hidden lg:block"
-              )}
-            >
+            <aside className="sticky top-20 max-h-[calc(100vh-6.5rem)] overflow-y-auto">
               {selectedIndex >= 0 ? (
                 <FieldConfigPanel
                   key={`${selectedKey}:${selectedIndex}`}
                   index={selectedIndex}
+                  onRemove={() => removeField(selectedIndex)}
                 />
               ) : (
                 <FieldConfigEmpty hasFields={fields.length > 0} />

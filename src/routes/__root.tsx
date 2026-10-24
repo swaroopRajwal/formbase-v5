@@ -8,6 +8,7 @@ import {
 import appStyles from "../styles/app.css?url"
 import { getSessionUser } from "@lib/auth/getSessionUser"
 import { Toaster } from "@ui/toast"
+import { TooltipProvider } from "@ui/tooltip"
 
 export const Route = createRootRouteWithContext()({
   beforeLoad: async () => ({ user: await getSessionUser() }),
@@ -49,7 +50,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <HeadContent />
       </head>
       <body className="dark">
-        {children}
+        <TooltipProvider>{children}</TooltipProvider>
         <Toaster />
         <Scripts />
       </body>

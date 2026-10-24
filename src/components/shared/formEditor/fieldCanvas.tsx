@@ -132,29 +132,17 @@ const FieldCanvas = ({
   onSelect,
   onRemove,
 }: Props) => {
-  const { control } = useFormContext<EditorValues>()
-  const title = useWatch({ control, name: "title" })
-  const description = useWatch({ control, name: "description" })
   const { setNodeRef } = useDroppable({ id: CANVAS_ID })
 
   return (
     <div
-      className="min-h-full px-4 py-8"
+      className="min-h-full"
       onClick={(e) => {
         if (!(e.target as HTMLElement).closest("[data-field-index]"))
           onSelect(null)
       }}
     >
-      <div ref={setNodeRef} className="mx-auto flex max-w-2xl flex-col gap-3">
-        <div className="mb-3 flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">{title || "Untitled form"}</h1>
-          {description.trim() && (
-            <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-              {description}
-            </p>
-          )}
-        </div>
-
+      <div ref={setNodeRef} className="flex flex-col gap-3">
         <SortableContext items={keys} strategy={verticalListSortingStrategy}>
           {keys.map((key, i) => (
             <div key={key} className="flex flex-col gap-3">
