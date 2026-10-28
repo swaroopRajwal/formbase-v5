@@ -40,6 +40,7 @@ import { rowToEditorField } from "@lib/forms/fieldRows"
 import { MAX_FIELDS_PER_FORM, type FieldType } from "@lib/forms/fieldSchemas"
 import {
   changeFormStatus,
+  deleteForm,
   getMyFormWithFields,
   saveForm,
 } from "@lib/forms/formFns"
@@ -168,6 +169,16 @@ const FormEditorPage = () => {
     })
   }
 
+  // Set while leaving after a delete, so the unsaved-changes prompt is skipped.
+  const deleting = useRef(false)
+
+  const onDelete = async () => {
+    await deleteForm({ data: { formId: loaded.id } })
+    deleting.current = true
+    toast.add({ type: TOAST_TYPES.success, title: "Form deleted" })
+    await router.navigate({ to: "/dashboard" })
+  }
+
   const onSubmit = async (values: EditorValues) => {
     const result = validateEditor(values)
     if (!result.ok) return
@@ -218,7 +229,7 @@ const FormEditorPage = () => {
 
   // Warn before leaving with unsaved edits (in-app navigation and tab close).
   const blocker = useBlocker({
-    shouldBlockFn: () => isDirty,
+    shouldBlockFn: () => isDirty && !deleting.current,
     enableBeforeUnload: isDirty,
     withResolver: true,
   })
@@ -335,7 +346,11 @@ const FormEditorPage = () => {
           </DragOverlay>
         </DndContext>
 
-        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        <SettingsDialog
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          onDelete={onDelete}
+        />
       </form>
 
       <ConfirmationDialog

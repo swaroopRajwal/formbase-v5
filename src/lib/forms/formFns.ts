@@ -11,6 +11,7 @@ import {
   desc,
   eq,
   inArray,
+  isNull,
   notInArray,
   sql,
 } from "drizzle-orm"
@@ -30,6 +31,9 @@ const requireUserId = async () => {
   if (!session) throw redirect({ to: "/login" })
   return session.user.id
 }
+
+// Deleted Forms are treated as if they never existed.
+const notDeleted = isNull(form.deletedAt)
 
 const formSummary = {
   id: form.id,
@@ -70,7 +74,7 @@ export const listMyForms = createServerFn({ method: "GET" })
   .validator(formsTableSearchSchema)
   .handler(async ({ data }) => {
     const userId = await requireUserId()
-    const owned = eq(form.userId, userId)
+    const owned = and(eq(form.userId, userId), notDeleted)
     const matching = and(
       owned,
       data.q ? titleContains(data.q) : undefined,
@@ -117,7 +121,7 @@ const findOwnedForm = async (userId: string, formId: string) => {
   const [found] = await db
     .select({ ...formSummary, description: form.description })
     .from(form)
-    .where(and(eq(form.id, formId), eq(form.userId, userId)))
+    .where(and(eq(form.id, formId), eq(form.userId, userId), notDeleted))
   if (!found) throw notFound()
   return found
 }
@@ -130,7 +134,7 @@ export const getMyForm = createServerFn({ method: "GET" })
     const [found] = await db
       .select(formSummary)
       .from(form)
-      .where(and(eq(form.id, data.formId), eq(form.userId, userId)))
+      .where(and(eq(form.id, data.formId), eq(form.userId, userId), notDeleted))
     if (!found) throw notFound()
     return found
   })
@@ -192,7 +196,7 @@ export const saveForm = createServerFn({ method: "POST" })
     const [found] = await db
       .select({ id: form.id })
       .from(form)
-      .where(and(eq(form.id, data.formId), eq(form.userId, userId)))
+      .where(and(eq(form.id, data.formId), eq(form.userId, userId), notDeleted))
     if (!found) throw notFound()
 
     const keptIds = data.fields.flatMap((f) => (f.id ? [f.id] : []))
@@ -245,7 +249,7 @@ export const changeFormStatus = createServerFn({ method: "POST" })
     const [found] = await db
       .select({ status: form.status, publicId: form.publicId })
       .from(form)
-      .where(and(eq(form.id, data.formId), eq(form.userId, userId)))
+      .where(and(eq(form.id, data.formId), eq(form.userId, userId), notDeleted))
     if (!found) throw notFound()
     const action: LifecycleAction = data.action
     const to = nextStatus(found.status, action)
@@ -272,6 +276,7 @@ export const changeFormStatus = createServerFn({ method: "POST" })
             and(
               eq(form.id, data.formId),
               eq(form.userId, userId),
+              notDeleted,
               eq(form.status, found.status)
             )
           )
@@ -285,6 +290,21 @@ export const changeFormStatus = createServerFn({ method: "POST" })
     return updated
   })
 
+// Soft delete: the Creator sees it as gone for good. The guard in WHERE makes
+// a second delete (or someone else's Form) a 404.
+export const deleteForm = createServerFn({ method: "POST" })
+  .validator(z.object({ formId: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const userId = await requireUserId()
+    const [deleted] = await db
+      .update(form)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(form.id, data.formId), eq(form.userId, userId), notDeleted))
+      .returning({ id: form.id })
+    if (!deleted) throw notFound()
+    return { deleted: true }
+  })
+
 // Unpublished and unknown ids are both a 404.
 const loadPublishedForm = async (publicId: string) => {
   const [found] = await db
@@ -295,7 +315,7 @@ const loadPublishedForm = async (publicId: string) => {
       status: form.status,
     })
     .from(form)
-    .where(eq(form.publicId, publicId))
+    .where(and(eq(form.publicId, publicId), notDeleted))
   if (found?.status !== "published") throw notFound()
   const fields = await db.select().from(field).where(eq(field.formId, found.id))
   const publicForm = toPublicForm(found, fields)

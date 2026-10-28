@@ -1,3 +1,4 @@
+import ConfirmationDialog from "@components/shared/confirmationDialog"
 import { TOAST_TYPES } from "@lib/constants/toast"
 import {
   PAGE_SIZES,
@@ -8,7 +9,7 @@ import {
   type SortKey,
   type StatusFilter,
 } from "@lib/forms/formsTableSearch"
-import type { listMyForms } from "@lib/forms/formFns"
+import { deleteForm, type listMyForms } from "@lib/forms/formFns"
 import {
   IconArrowDown,
   IconArrowUp,
@@ -17,10 +18,12 @@ import {
   IconDots,
   IconEdit,
   IconListDetails,
+  IconTrash,
 } from "@tabler/icons-react"
 import {
   getRouteApi,
   useNavigate,
+  useRouter,
   useRouterState,
 } from "@tanstack/react-router"
 import {
@@ -86,43 +89,69 @@ const copyPublicLink = async (publicId: string) => {
 
 const RowActions = ({ row }: { row: FormRow }) => {
   const navigate = useNavigate()
+  const router = useRouter()
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button variant="ghost" size="icon" aria-label="Form actions" />
-        }
-      >
-        <IconDots />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuItem
-          onClick={() =>
-            navigate({ to: "/forms/$formId", params: { formId: row.id } })
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="ghost" size="icon" aria-label="Form actions" />
           }
         >
-          <IconEdit />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() =>
-            navigate({
-              to: "/forms/$formId/submissions",
-              params: { formId: row.id },
-            })
-          }
-        >
-          <IconListDetails />
-          View submissions
-        </DropdownMenuItem>
-        {row.status === "published" && row.publicId && (
-          <DropdownMenuItem onClick={() => copyPublicLink(row.publicId || "")}>
-            <IconCopy />
-            Copy public link
+          <IconDots />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            onClick={() =>
+              navigate({ to: "/forms/$formId", params: { formId: row.id } })
+            }
+          >
+            <IconEdit />
+            Edit
           </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem
+            onClick={() =>
+              navigate({
+                to: "/forms/$formId/submissions",
+                params: { formId: row.id },
+              })
+            }
+          >
+            <IconListDetails />
+            View submissions
+          </DropdownMenuItem>
+          {row.status === "published" && row.publicId && (
+            <DropdownMenuItem
+              onClick={() => copyPublicLink(row.publicId || "")}
+            >
+              <IconCopy />
+              Copy public link
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => setConfirmingDelete(true)}
+          >
+            <IconTrash />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <ConfirmationDialog
+        open={confirmingDelete}
+        onOpenChange={setConfirmingDelete}
+        title="Delete this form?"
+        description={`"${row.title}" and all of its submissions will be permanently deleted. This can't be undone.`}
+        confirmLabel="Delete form"
+        destructive
+        onConfirm={async () => {
+          await deleteForm({ data: { formId: row.id } })
+          await router.invalidate()
+          toast.add({ type: TOAST_TYPES.success, title: "Form deleted" })
+        }}
+      />
+    </>
   )
 }
 

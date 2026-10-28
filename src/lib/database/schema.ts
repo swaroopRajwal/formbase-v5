@@ -101,6 +101,9 @@ export const form = pgTable(
     // Random unguessable short id for the Public link. Null until first
     // published; kept stable across unpublish/republish.
     publicId: text("public_id").unique(),
+    // Set when the Creator deletes the Form. Every query must filter on it
+    // being null; the row and its children are kept.
+    deletedAt: timestamp("deleted_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

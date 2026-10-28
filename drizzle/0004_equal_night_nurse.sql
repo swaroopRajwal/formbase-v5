@@ -1,0 +1,1 @@
+ALTER TABLE "form" ADD COLUMN "deleted_at" timestamp;
