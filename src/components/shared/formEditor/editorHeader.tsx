@@ -1,5 +1,4 @@
 import { TOAST_TYPES } from "@lib/constants/toast"
-import { MAX_FIELDS_PER_FORM } from "@lib/forms/fieldSchemas"
 import type { EditorValues } from "@lib/forms/editorModel"
 import { availableAction, type LifecycleAction } from "@lib/forms/lifecycle"
 import {
@@ -14,16 +13,10 @@ import { Button, buttonVariants } from "@ui/button"
 import { Input } from "@ui/input"
 import { Spinner } from "@ui/spinner"
 import { toast } from "@ui/toast"
-import { cn } from "cn"
 import { useEffect, useRef, useState } from "react"
 import { Controller, useFormContext } from "react-hook-form"
 import AppTooltip from "../appTooltip"
 import { Badge } from "@ui/badge"
-
-// const STATUS_STYLES: Record<string, string> = {
-//   unpublished: "bg-muted text-muted-foreground",
-//   published: "bg-emerald-500/15 text-emerald-500",
-// }
 
 type Props = {
   formId: string
@@ -43,7 +36,6 @@ const EditorHeader = ({
   publicId,
   changingStatus,
   onChangeStatus,
-  fieldCount,
   dirty,
   saving,
   onOpenSettings,

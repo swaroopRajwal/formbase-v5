@@ -14,7 +14,7 @@ import {
 import { Button } from "@ui/button"
 import { FieldError } from "@ui/field"
 import { cn } from "cn"
-import { useFormContext, useWatch } from "react-hook-form"
+import { useFormContext } from "react-hook-form"
 import { CANVAS_ID } from "./dndIds"
 import FieldPreview from "./fieldPreview"
 
