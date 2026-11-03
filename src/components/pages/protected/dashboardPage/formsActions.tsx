@@ -79,11 +79,7 @@ const FormsActions: React.FC<IFormsActionsProps> = ({
             Copy Link
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem
-          variant="destructive"
-          onClick={handleDeleteClick}
-          disabled
-        >
+        <DropdownMenuItem variant="destructive" onClick={handleDeleteClick}>
           <IconTrash />
           Delete
         </DropdownMenuItem>

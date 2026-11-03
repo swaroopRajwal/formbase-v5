@@ -1,5 +1,5 @@
 import { formatDate } from "@lib/utils"
-import type { getAllForms } from "@src/serverFunctions/forms.api"
+import { deleteForm, type getAllForms } from "@src/serverFunctions/forms.api"
 import {
   createColumnHelper,
   tableFeatures,
@@ -17,6 +17,9 @@ import {
 import FormsActions from "./formsActions"
 import { useState } from "react"
 import ConfirmationDialog from "@components/shared/confirmationDialog"
+import { toast } from "@ui/toast"
+import { TOAST_TYPES } from "@lib/constants/toast"
+import { useRouter } from "@tanstack/react-router"
 
 export interface IFormsTableProps {
   forms: Awaited<ReturnType<typeof getAllForms>>
@@ -64,7 +67,9 @@ const cols = colHelper.columns([
 ])
 
 const FormsTable: React.FC<IFormsTableProps> = ({ forms }) => {
-  const [deleteForm, setDeleteForm] = useState<
+  const router = useRouter()
+
+  const [deleteFormData, setDeleteFormData] = useState<
     IFormsTableProps["forms"][number] | null
   >(null)
 
@@ -75,13 +80,35 @@ const FormsTable: React.FC<IFormsTableProps> = ({ forms }) => {
         id: "actions",
         header: "",
         cell: ({ row }) => (
-          <FormsActions form={row.original} setDeleteForm={setDeleteForm} />
+          <FormsActions form={row.original} setDeleteForm={setDeleteFormData} />
         ),
       }),
     ],
     data: forms,
     features,
   })
+
+  const handleDelete = async () => {
+    if (!deleteFormData) return
+
+    try {
+      await deleteForm({
+        data: { formId: deleteFormData.id },
+      })
+      await router.invalidate()
+      setDeleteFormData(null)
+      toast.add({
+        type: TOAST_TYPES.success,
+        title: "Form deleted",
+      })
+    } catch (error) {
+      toast.add({
+        type: TOAST_TYPES.error,
+        title: "Form delete failed",
+        description: "Something went wrong",
+      })
+    }
+  }
 
   return (
     <div className="rounded-lg border">
@@ -110,18 +137,15 @@ const FormsTable: React.FC<IFormsTableProps> = ({ forms }) => {
         </TableBody>
       </Table>
       <ConfirmationDialog
-        open={!!deleteForm?.id}
+        open={!!deleteFormData?.id}
         onOpenChange={(v) => {
-          if (!v) setDeleteForm(null)
+          if (!v) setDeleteFormData(null)
         }}
-        title={`Delete ${deleteForm?.title} form?`}
+        title={`Delete ${deleteFormData?.title} form?`}
         description="All of the submissions will be deleted and this action cannot be undone."
         confirmLabel="Delete form"
         destructive
-        onConfirm={async () => {
-          console.log("form deleted")
-          setDeleteForm(null)
-        }}
+        onConfirm={handleDelete}
       />
     </div>
   )

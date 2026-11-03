@@ -2,7 +2,9 @@ import { createServerFn } from "@tanstack/react-start"
 import { getActiveUser } from "./authHelpers"
 import db from "@database"
 import { field, form, submission } from "@database/schema"
-import { desc, eq } from "drizzle-orm"
+import { and, desc, eq, isNull } from "drizzle-orm"
+import z from "zod"
+import { notFound } from "@tanstack/react-router"
 
 const formSummary = {
   id: form.id,
@@ -24,7 +26,7 @@ export const getAllForms = createServerFn({ method: "GET" }).handler(
         submissionCount: db.$count(submission, eq(submission.formId, form.id)),
       })
       .from(form)
-      .where(eq(form.userId, user.id))
+      .where(and(eq(form.userId, user.id), isNull(form.deletedAt)))
       .orderBy(desc(form.updatedAt))
 
     return userForms
@@ -46,3 +48,30 @@ export const createBlankForm = createServerFn({ method: "POST" }).handler(
     return newForm
   }
 )
+
+export const deleteForm = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      formId: z.string().min(1),
+    })
+  )
+  .handler(async ({ data }) => {
+    const user = await getActiveUser()
+
+    const [deletedForm] = await db
+      .update(form)
+      .set({
+        deletedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(form.id, data.formId),
+          eq(form.userId, user.id),
+          isNull(form.deletedAt)
+        )
+      )
+      .returning({ id: form.id })
+
+    if (!deletedForm) throw notFound()
+    return { deleted: true }
+  })
