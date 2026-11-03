@@ -15,7 +15,7 @@ import { Spinner } from "@ui/spinner"
 import { toast } from "@ui/toast"
 import { useForm } from "react-hook-form"
 
-const routeApi = getRouteApi("/__protected/__shell/settings")
+const routeApi = getRouteApi("/__protected/settings")
 
 const SIGN_IN_METHOD_LABELS: Record<SignInMethod, string> = {
   google: "Google",

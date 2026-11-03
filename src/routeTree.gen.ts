@@ -11,12 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as _protectedRouteImport } from './routes/__protected'
 import { Route as _publicRouteImport } from './routes/__public'
-import { Route as _protected_shellRouteImport } from './routes/__protected/__shell'
+import { Route as _protectedDashboardRouteImport } from './routes/__protected/dashboard'
+import { Route as _protectedSettingsRouteImport } from './routes/__protected/settings'
 import { Route as _publicIndexRouteImport } from './routes/__public/index'
 import { Route as _publicLoginRouteImport } from './routes/__public/login'
 import { Route as FPublicIdRouteImport } from './routes/f/$publicId'
-import { Route as _protected_shellDashboardRouteImport } from './routes/__protected/__shell/dashboard'
-import { Route as _protected_shellSettingsRouteImport } from './routes/__protected/__shell/settings'
 import { Route as _protectedFormsFormIdRouteImport } from './routes/__protected/forms/$formId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as _protectedFormsFormIdSubmissionsRouteImport } from './routes/__protected/forms/$formId_.submissions'
@@ -29,8 +28,14 @@ const _publicRoute = _publicRouteImport.update({
   id: '/__public',
   getParentRoute: () => rootRouteImport,
 } as any)
-const _protected_shellRoute = _protected_shellRouteImport.update({
-  id: '/__shell',
+const _protectedDashboardRoute = _protectedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => _protectedRoute,
+} as any)
+const _protectedSettingsRoute = _protectedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => _protectedRoute,
 } as any)
 const _publicIndexRoute = _publicIndexRouteImport.update({
@@ -48,18 +53,6 @@ const FPublicIdRoute = FPublicIdRouteImport.update({
   path: '/f/$publicId',
   getParentRoute: () => rootRouteImport,
 } as any)
-const _protected_shellDashboardRoute =
-  _protected_shellDashboardRouteImport.update({
-    id: '/dashboard',
-    path: '/dashboard',
-    getParentRoute: () => _protected_shellRoute,
-  } as any)
-const _protected_shellSettingsRoute =
-  _protected_shellSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => _protected_shellRoute,
-  } as any)
 const _protectedFormsFormIdRoute = _protectedFormsFormIdRouteImport.update({
   id: '/forms/$formId',
   path: '/forms/$formId',
@@ -79,20 +72,20 @@ const _protectedFormsFormIdSubmissionsRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof _publicIndexRoute
+  '/dashboard': typeof _protectedDashboardRoute
+  '/settings': typeof _protectedSettingsRoute
   '/login': typeof _publicLoginRoute
   '/f/$publicId': typeof FPublicIdRoute
-  '/dashboard': typeof _protected_shellDashboardRoute
-  '/settings': typeof _protected_shellSettingsRoute
   '/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/forms/$formId/submissions': typeof _protectedFormsFormIdSubmissionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof _publicIndexRoute
+  '/dashboard': typeof _protectedDashboardRoute
+  '/settings': typeof _protectedSettingsRoute
   '/login': typeof _publicLoginRoute
   '/f/$publicId': typeof FPublicIdRoute
-  '/dashboard': typeof _protected_shellDashboardRoute
-  '/settings': typeof _protected_shellSettingsRoute
   '/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/forms/$formId/submissions': typeof _protectedFormsFormIdSubmissionsRoute
@@ -101,12 +94,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/__protected': typeof _protectedRouteWithChildren
   '/__public': typeof _publicRouteWithChildren
-  '/__protected/__shell': typeof _protected_shellRouteWithChildren
+  '/__protected/dashboard': typeof _protectedDashboardRoute
+  '/__protected/settings': typeof _protectedSettingsRoute
   '/__public/login': typeof _publicLoginRoute
   '/f/$publicId': typeof FPublicIdRoute
   '/__public/': typeof _publicIndexRoute
-  '/__protected/__shell/dashboard': typeof _protected_shellDashboardRoute
-  '/__protected/__shell/settings': typeof _protected_shellSettingsRoute
   '/__protected/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/__protected/forms/$formId_/submissions': typeof _protectedFormsFormIdSubmissionsRoute
@@ -115,20 +107,20 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/login'
-    | '/f/$publicId'
     | '/dashboard'
     | '/settings'
+    | '/login'
+    | '/f/$publicId'
     | '/forms/$formId'
     | '/api/auth/$'
     | '/forms/$formId/submissions'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/login'
-    | '/f/$publicId'
     | '/dashboard'
     | '/settings'
+    | '/login'
+    | '/f/$publicId'
     | '/forms/$formId'
     | '/api/auth/$'
     | '/forms/$formId/submissions'
@@ -136,12 +128,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/__protected'
     | '/__public'
-    | '/__protected/__shell'
+    | '/__protected/dashboard'
+    | '/__protected/settings'
     | '/__public/login'
     | '/f/$publicId'
     | '/__public/'
-    | '/__protected/__shell/dashboard'
-    | '/__protected/__shell/settings'
     | '/__protected/forms/$formId'
     | '/api/auth/$'
     | '/__protected/forms/$formId_/submissions'
@@ -170,11 +161,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof _publicRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/__protected/__shell': {
-      id: '/__protected/__shell'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof _protected_shellRouteImport
+    '/__protected/dashboard': {
+      id: '/__protected/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof _protectedDashboardRouteImport
+      parentRoute: typeof _protectedRoute
+    }
+    '/__protected/settings': {
+      id: '/__protected/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof _protectedSettingsRouteImport
       parentRoute: typeof _protectedRoute
     }
     '/__public/': {
@@ -197,20 +195,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/f/$publicId'
       preLoaderRoute: typeof FPublicIdRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/__protected/__shell/dashboard': {
-      id: '/__protected/__shell/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof _protected_shellDashboardRouteImport
-      parentRoute: typeof _protected_shellRoute
-    }
-    '/__protected/__shell/settings': {
-      id: '/__protected/__shell/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof _protected_shellSettingsRouteImport
-      parentRoute: typeof _protected_shellRoute
     }
     '/__protected/forms/$formId': {
       id: '/__protected/forms/$formId'
@@ -236,27 +220,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface _protected_shellRouteChildren {
-  _protected_shellDashboardRoute: typeof _protected_shellDashboardRoute
-  _protected_shellSettingsRoute: typeof _protected_shellSettingsRoute
-}
-
-const _protected_shellRouteChildren: _protected_shellRouteChildren = {
-  _protected_shellDashboardRoute: _protected_shellDashboardRoute,
-  _protected_shellSettingsRoute: _protected_shellSettingsRoute,
-}
-
-const _protected_shellRouteWithChildren =
-  _protected_shellRoute._addFileChildren(_protected_shellRouteChildren)
-
 interface _protectedRouteChildren {
-  _protected_shellRoute: typeof _protected_shellRouteWithChildren
+  _protectedDashboardRoute: typeof _protectedDashboardRoute
+  _protectedSettingsRoute: typeof _protectedSettingsRoute
   _protectedFormsFormIdRoute: typeof _protectedFormsFormIdRoute
   _protectedFormsFormIdSubmissionsRoute: typeof _protectedFormsFormIdSubmissionsRoute
 }
 
 const _protectedRouteChildren: _protectedRouteChildren = {
-  _protected_shellRoute: _protected_shellRouteWithChildren,
+  _protectedDashboardRoute: _protectedDashboardRoute,
+  _protectedSettingsRoute: _protectedSettingsRoute,
   _protectedFormsFormIdRoute: _protectedFormsFormIdRoute,
   _protectedFormsFormIdSubmissionsRoute: _protectedFormsFormIdSubmissionsRoute,
 }

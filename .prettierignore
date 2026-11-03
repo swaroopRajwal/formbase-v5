@@ -6,3 +6,4 @@ drizzle
 node_modules
 dist
 .tanstack
+.vercel

@@ -26,6 +26,7 @@ export default [
       ".tanstack/**",
       "dist/**",
       "drizzle/**",
+      ".vercel/**",
     ],
   },
 ]
