@@ -104,17 +104,17 @@ export const listMyForms = createServerFn({ method: "GET" })
     }
   })
 
-export const createBlankForm = createServerFn({ method: "POST" }).handler(
-  async () => {
-    const userId = await requireUserId()
-    const [created] = await db
-      .insert(form)
-      .values({ userId, title: "Untitled form" })
-      .returning(formSummary)
-    if (!created) throw new Error("Failed to create form")
-    return created
-  }
-)
+// export const createBlankForm = createServerFn({ method: "POST" }).handler(
+//   async () => {
+//     const userId = await requireUserId()
+//     const [created] = await db
+//       .insert(form)
+//       .values({ userId, title: "Untitled form" })
+//       .returning(formSummary)
+//     if (!created) throw new Error("Failed to create form")
+//     return created
+//   }
+// )
 
 // The Creator's own Form, or notFound for a missing or someone else's Form.
 const findOwnedForm = async (userId: string, formId: string) => {

@@ -14,8 +14,11 @@ import {
   TableHeader,
   TableRow,
 } from "@ui/table"
+import FormsActions from "./formsActions"
+import { useState } from "react"
+import ConfirmationDialog from "@components/shared/confirmationDialog"
 
-interface IFormsTableProps {
+export interface IFormsTableProps {
   forms: Awaited<ReturnType<typeof getAllForms>>
 }
 
@@ -61,8 +64,21 @@ const cols = colHelper.columns([
 ])
 
 const FormsTable: React.FC<IFormsTableProps> = ({ forms }) => {
+  const [deleteForm, setDeleteForm] = useState<
+    IFormsTableProps["forms"][number] | null
+  >(null)
+
   const table = useTable({
-    columns: cols,
+    columns: [
+      ...cols,
+      colHelper.display({
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <FormsActions form={row.original} setDeleteForm={setDeleteForm} />
+        ),
+      }),
+    ],
     data: forms,
     features,
   })
@@ -93,6 +109,20 @@ const FormsTable: React.FC<IFormsTableProps> = ({ forms }) => {
           ))}
         </TableBody>
       </Table>
+      <ConfirmationDialog
+        open={!!deleteForm?.id}
+        onOpenChange={(v) => {
+          if (!v) setDeleteForm(null)
+        }}
+        title={`Delete ${deleteForm?.title} form?`}
+        description="All of the submissions will be deleted and this action cannot be undone."
+        confirmLabel="Delete form"
+        destructive
+        onConfirm={async () => {
+          console.log("form deleted")
+          setDeleteForm(null)
+        }}
+      />
     </div>
   )
 }
