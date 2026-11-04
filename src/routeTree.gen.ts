@@ -19,6 +19,7 @@ import { Route as FPublicIdRouteImport } from './routes/f/$publicId'
 import { Route as _protectedFormsFormIdRouteImport } from './routes/__protected/forms/$formId'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as _protectedFormsFormIdSubmissionsRouteImport } from './routes/__protected/forms/$formId_.submissions'
+import { Route as _protectedFormsEditFormIdRouteImport } from './routes/__protected/forms/edit.$formId'
 
 const _protectedRoute = _protectedRouteImport.update({
   id: '/__protected',
@@ -69,6 +70,12 @@ const _protectedFormsFormIdSubmissionsRoute =
     path: '/forms/$formId/submissions',
     getParentRoute: () => _protectedRoute,
   } as any)
+const _protectedFormsEditFormIdRoute =
+  _protectedFormsEditFormIdRouteImport.update({
+    id: '/forms/edit/$formId',
+    path: '/forms/edit/$formId',
+    getParentRoute: () => _protectedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof _publicIndexRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/forms/$formId/submissions': typeof _protectedFormsFormIdSubmissionsRoute
+  '/forms/edit/$formId': typeof _protectedFormsEditFormIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof _publicIndexRoute
@@ -89,6 +97,7 @@ export interface FileRoutesByTo {
   '/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/forms/$formId/submissions': typeof _protectedFormsFormIdSubmissionsRoute
+  '/forms/edit/$formId': typeof _protectedFormsEditFormIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,6 +111,7 @@ export interface FileRoutesById {
   '/__protected/forms/$formId': typeof _protectedFormsFormIdRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/__protected/forms/$formId_/submissions': typeof _protectedFormsFormIdSubmissionsRoute
+  '/__protected/forms/edit/$formId': typeof _protectedFormsEditFormIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/forms/$formId'
     | '/api/auth/$'
     | '/forms/$formId/submissions'
+    | '/forms/edit/$formId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -124,6 +135,7 @@ export interface FileRouteTypes {
     | '/forms/$formId'
     | '/api/auth/$'
     | '/forms/$formId/submissions'
+    | '/forms/edit/$formId'
   id:
     | '__root__'
     | '/__protected'
@@ -136,6 +148,7 @@ export interface FileRouteTypes {
     | '/__protected/forms/$formId'
     | '/api/auth/$'
     | '/__protected/forms/$formId_/submissions'
+    | '/__protected/forms/edit/$formId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof _protectedFormsFormIdSubmissionsRouteImport
       parentRoute: typeof _protectedRoute
     }
+    '/__protected/forms/edit/$formId': {
+      id: '/__protected/forms/edit/$formId'
+      path: '/forms/edit/$formId'
+      fullPath: '/forms/edit/$formId'
+      preLoaderRoute: typeof _protectedFormsEditFormIdRouteImport
+      parentRoute: typeof _protectedRoute
+    }
   }
 }
 
@@ -225,6 +245,7 @@ interface _protectedRouteChildren {
   _protectedSettingsRoute: typeof _protectedSettingsRoute
   _protectedFormsFormIdRoute: typeof _protectedFormsFormIdRoute
   _protectedFormsFormIdSubmissionsRoute: typeof _protectedFormsFormIdSubmissionsRoute
+  _protectedFormsEditFormIdRoute: typeof _protectedFormsEditFormIdRoute
 }
 
 const _protectedRouteChildren: _protectedRouteChildren = {
@@ -232,6 +253,7 @@ const _protectedRouteChildren: _protectedRouteChildren = {
   _protectedSettingsRoute: _protectedSettingsRoute,
   _protectedFormsFormIdRoute: _protectedFormsFormIdRoute,
   _protectedFormsFormIdSubmissionsRoute: _protectedFormsFormIdSubmissionsRoute,
+  _protectedFormsEditFormIdRoute: _protectedFormsEditFormIdRoute,
 }
 
 const _protectedRouteWithChildren = _protectedRoute._addFileChildren(

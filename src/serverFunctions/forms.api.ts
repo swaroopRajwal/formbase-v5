@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start"
 import { getActiveUser } from "./authHelpers"
 import db from "@database"
 import { field, form, submission } from "@database/schema"
-import { and, desc, eq, isNull } from "drizzle-orm"
+import { and, asc, desc, eq, isNull } from "drizzle-orm"
 import z from "zod"
 import { notFound } from "@tanstack/react-router"
 
@@ -74,4 +74,31 @@ export const deleteForm = createServerFn({ method: "POST" })
 
     if (!deletedForm) throw notFound()
     return { deleted: true }
+  })
+
+export const getMyFormWithFields = createServerFn({ method: "GET" })
+  .validator(z.object({ formId: z.string().min(1) }))
+  .handler(async ({ data }) => {
+    const user = await getActiveUser()
+    const [myForm] = await db
+      .select()
+      .from(form)
+      .where(
+        and(
+          eq(form.id, data.formId),
+          eq(form.userId, user.id),
+          isNull(form.deletedAt)
+        )
+      )
+    if (!myForm) throw notFound()
+    const fields = await db
+      .select()
+      .from(field)
+      .where(eq(field.formId, myForm.id))
+      .orderBy(asc(field.position))
+
+    return {
+      ...myForm,
+      fields,
+    }
   })

@@ -11,7 +11,7 @@ export const Route = createFileRoute("/__protected/dashboard")({
 
 function RouteComponent() {
   return (
-    <PageWrapper className="flex flex-col gap-6" header={<Navbar />}>
+    <PageWrapper header={<Navbar />}>
       <DashboardPage />
     </PageWrapper>
   )
