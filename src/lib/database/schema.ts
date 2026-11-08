@@ -8,8 +8,8 @@ import {
   integer,
   jsonb,
 } from "drizzle-orm/pg-core"
-import { FIELD_TYPES } from "../forms/fieldSchemas"
 import type { AnswerValue, SnapshotField } from "../forms/submission"
+import { FIELD_TYPES } from "@lib/constants/fields"
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -113,7 +113,8 @@ export const form = pgTable(
   (table) => [index("form_userId_idx").on(table.userId)]
 )
 
-export type FieldSettings = {
+export type FieldSettingsType = {
+  minLength?: number
   maxLength?: number
   min?: number
   max?: number
@@ -136,7 +137,10 @@ export const field = pgTable(
     options: jsonb("options").$type<string[]>(),
     allowOther: boolean("allow_other").default(false).notNull(),
     // Type-specific validation: Number min/max, Short/Paragraph maxLength.
-    settings: jsonb("settings").$type<FieldSettings>().default({}).notNull(),
+    settings: jsonb("settings")
+      .$type<FieldSettingsType>()
+      .default({})
+      .notNull(),
     position: integer("position").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

@@ -12,7 +12,7 @@ const PageWrapper: React.FC<
   return (
     <main className={cn("min-h-screen", wrapperRootProps?.className)}>
       {header ? header : <></>}
-      <div {...props} className={cn("w-full max-w-6xl mx-auto p-6", className)}>
+      <div {...props} className={cn("w-full max-w-7xl mx-auto p-6", className)}>
         {children}
       </div>
     </main>

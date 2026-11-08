@@ -20,7 +20,7 @@ export const Route = createFileRoute("/__protected/forms/edit/$formId")({
 
 function RouteComponent() {
   return (
-    <PageWrapper>
+    <PageWrapper header={<Navbar />}>
       <EditFormPage />
     </PageWrapper>
   )

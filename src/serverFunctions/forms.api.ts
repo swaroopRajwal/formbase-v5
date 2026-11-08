@@ -5,6 +5,7 @@ import { field, form, submission } from "@database/schema"
 import { and, asc, desc, eq, isNull } from "drizzle-orm"
 import z from "zod"
 import { notFound } from "@tanstack/react-router"
+import type { IEditorField } from "@lib/types/form.type"
 
 const formSummary = {
   id: form.id,
@@ -99,6 +100,6 @@ export const getMyFormWithFields = createServerFn({ method: "GET" })
 
     return {
       ...myForm,
-      fields,
+      fields: fields as IEditorField[],
     }
   })

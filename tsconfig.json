@@ -17,6 +17,7 @@
       "@database": ["./src/lib/database/index.ts"],
       "@database/*": ["./src/lib/database/*"],
       "@ui/*": ["./src/components/ui/*"],
+      "@ui-form/*": ["./src/components/uiForm/*"],
       "@components/*": ["./src/components/*"],
       "@lib/*": ["./src/lib/*"],
       "@src/*": ["./src/*"]
