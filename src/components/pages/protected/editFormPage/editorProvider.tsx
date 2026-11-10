@@ -61,7 +61,7 @@ const EditorProvider: React.FC<IEditorProviderProps> = ({
   }
 
   const handleDeleteField = (id: string) => {
-    // TODO: if the current selected field is deleted, select a field next to it
+    // TODO: if the current selected field is deleted, select a field next to it and if the field itself is an ending field, select the field previous to it
     deleteField(id)
   }
 

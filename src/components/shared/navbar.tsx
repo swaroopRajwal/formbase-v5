@@ -41,7 +41,7 @@ const Navbar = () => {
   }
 
   return (
-    <header className="border-b">
+    <header className="border-b bg-background sticky top-0 z-1000">
       <nav className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between px-6">
         <Link to="/dashboard" className="text-lg font-semibold">
           Formbase

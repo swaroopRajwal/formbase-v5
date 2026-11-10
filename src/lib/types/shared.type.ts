@@ -10,3 +10,7 @@ export interface ICommonFieldElementProps {
   disabled?: boolean
   field: IEditorField
 }
+
+export interface ICommonFieldConfigProps {
+  fieldData: IEditorField
+}

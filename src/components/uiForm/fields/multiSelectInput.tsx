@@ -17,7 +17,7 @@ const MultiSelectInput: React.FC<ICommonFieldElementProps> = ({
   disabled,
 }) => {
   return (
-    <Field className={cn(disabled ? "pointer-events-auto" : "")}>
+    <Field className={cn(disabled ? "pointer-events-none" : "")}>
       <FormLabel htmlFor={field.id} isRequired={field.required}>
         {field.label}
       </FormLabel>

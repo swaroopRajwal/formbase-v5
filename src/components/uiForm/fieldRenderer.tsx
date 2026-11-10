@@ -14,13 +14,9 @@ import TimeInput from "./fields/timeInput"
 import DateRangeInput from "./fields/dateRangeInput"
 import type { ICommonFieldElementProps } from "@lib/types/shared.type"
 
-interface IFieldRendererProps extends ICommonFieldElementProps {
-  field: IEditorField
-}
-
 const FIELDS_RENDERER_REGISTER: Record<
   FormFieldKeyType,
-  React.FC<ICommonFieldElementProps & { field: IEditorField }>
+  React.FC<ICommonFieldElementProps>
 > = {
   short: ShortTextInput,
   paragraph: ParagraphInput,
@@ -37,7 +33,9 @@ const FIELDS_RENDERER_REGISTER: Record<
   date_range: DateRangeInput,
 }
 
-const FieldRenderer: React.FC<IFieldRendererProps> = ({ field, disabled }) =>
-  FIELDS_RENDERER_REGISTER[field.type]({ field, disabled })
+const FieldRenderer: React.FC<ICommonFieldElementProps> = ({
+  field,
+  disabled,
+}) => FIELDS_RENDERER_REGISTER[field.type]({ field, disabled })
 
 export default FieldRenderer
