@@ -3,8 +3,8 @@ import {
   IconAlignLeft,
   IconCalendar,
   IconCalendarStats,
-  IconCalendarTime,
   IconCircleDot,
+  IconClockRecord,
   IconLink,
   IconListCheck,
   IconMail,
@@ -28,7 +28,7 @@ export const FIELD_TYPES = [
   "select",
   "multi_select",
   "date",
-  "datetime",
+  "time",
   "date_range",
 ] as const
 
@@ -107,11 +107,11 @@ export const FIELDS_META_RECORD: Record<
     icon: IconCalendar,
     description: "Pick a single date",
   },
-  datetime: {
-    type: "datetime",
-    label: "Date Time",
-    icon: IconCalendarTime,
-    description: "Pick a date and time",
+  time: {
+    type: "time",
+    label: "Time",
+    icon: IconClockRecord,
+    description: "Pick a time",
   },
   date_range: {
     type: "date_range",
@@ -220,7 +220,7 @@ export const DEFAULT_FIELDS_META_RECORD: Record<
     formId: params.formId,
     type: "checkbox",
     label: "Checkbox",
-    helperText: "Choose single option",
+    helperText: "Choose one or more options",
     required: false,
     placeholder: "",
     options: ["Option 1", "Option 2", "Option 3"],
@@ -243,7 +243,6 @@ export const DEFAULT_FIELDS_META_RECORD: Record<
     position: params.position,
     createdAt: new Date(),
     updatedAt: new Date(),
-
     settings: {},
   }),
   select: (params) => ({
@@ -291,12 +290,12 @@ export const DEFAULT_FIELDS_META_RECORD: Record<
     updatedAt: new Date(),
     settings: {},
   }),
-  datetime: (params) => ({
+  time: (params) => ({
     id: crypto.randomUUID(),
     formId: params.formId,
-    type: "datetime",
-    label: "Date Time",
-    helperText: "Example: Tomorrow 6pm OR Today 18:45",
+    type: "time",
+    label: "Time",
+    helperText: "",
     required: false,
     placeholder: "",
     options: [],

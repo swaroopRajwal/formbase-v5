@@ -16,7 +16,7 @@ export const FIELD_TYPES = [
   "select",
   "multi_select",
   "date",
-  "datetime",
+  "time",
   "date_range",
 ] as const
 export type FieldType = (typeof FIELD_TYPES)[number]
@@ -57,7 +57,7 @@ const text = (type: "short" | "paragraph") =>
     maxLength: textMaxLength,
   })
 
-const placeholderOnly = (type: "url" | "email" | "date" | "datetime") =>
+const placeholderOnly = (type: "url" | "email" | "date" | "time") =>
   z.strictObject({ ...common, type: z.literal(type), placeholder })
 
 const noSettings = (type: "switch" | "date_range") =>
@@ -101,7 +101,7 @@ export const fieldSchema = z.discriminatedUnion("type", [
   dropdown("select"),
   dropdown("multi_select"),
   placeholderOnly("date"),
-  placeholderOnly("datetime"),
+  placeholderOnly("time"),
   noSettings("date_range"),
 ])
 export type FieldInput = z.input<typeof fieldSchema>

@@ -50,5 +50,5 @@ export const FIELD_TYPE_GROUPS: { label: string; types: FieldType[] }[] = [
     label: "Choice",
     types: ["radio", "checkbox", "switch", "select", "multi_select"],
   },
-  { label: "Date & time", types: ["date", "datetime", "date_range"] },
+  { label: "Date & time", types: ["date", "time", "date_range"] },
 ]

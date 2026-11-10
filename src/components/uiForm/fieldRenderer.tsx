@@ -1,5 +1,5 @@
-import type { IEditorField } from "@lib/types/form.type"
-import ShortTextInput from "./fields/shortText"
+import type { FormFieldKeyType, IEditorField } from "@lib/types/form.type"
+import ShortTextInput from "./fields/shortTextInput"
 import ParagraphInput from "./fields/paragraphInput"
 import NumberInput from "./fields/numberInput"
 import URLInput from "./fields/urlInput"
@@ -10,61 +10,34 @@ import SwitchInput from "./fields/switchInput"
 import SelectInput from "./fields/selectInput"
 import MultiSelectInput from "./fields/multiSelectInput"
 import DateInput from "./fields/dateInput"
-import DateTimeInput from "./fields/dateTimeInput"
+import TimeInput from "./fields/timeInput"
 import DateRangeInput from "./fields/dateRangeInput"
+import type { ICommonFieldElementProps } from "@lib/types/shared.type"
 
-interface IFieldRendererProps {
+interface IFieldRendererProps extends ICommonFieldElementProps {
   field: IEditorField
 }
 
-const FieldRenderer: React.FC<IFieldRendererProps> = ({ field }) => {
-  switch (field.type) {
-    case "short":
-      ;<ShortTextInput field={field} />
-      break
-    case "paragraph":
-      ;<ParagraphInput field={field} />
-      break
-    case "number":
-      ;<NumberInput field={field} />
-      break
-    case "url":
-      ;<URLInput field={field} />
-      break
-    case "email":
-      ;<EmailInput field={field} />
-      break
-    case "radio":
-      ;<RadioInput field={field} />
-      break
-    case "checkbox":
-      ;<CheckboxInput field={field} />
-      break
-    case "switch":
-      ;<SwitchInput field={field} />
-      break
-    case "select":
-      ;<SelectInput field={field} />
-      break
-    case "multi_select":
-      ;<MultiSelectInput field={field} />
-      break
-    case "date":
-      ;<DateInput field={field} />
-      break
-    case "datetime":
-      ;<DateTimeInput field={field} />
-      break
-    case "date_range":
-      ;<DateRangeInput field={field} />
-      break
-
-    default:
-      ;<></>
-      break
-  }
-
-  return <></>
+const FIELDS_RENDERER_REGISTER: Record<
+  FormFieldKeyType,
+  React.FC<ICommonFieldElementProps & { field: IEditorField }>
+> = {
+  short: ShortTextInput,
+  paragraph: ParagraphInput,
+  number: NumberInput,
+  url: URLInput,
+  email: EmailInput,
+  radio: RadioInput,
+  checkbox: CheckboxInput,
+  switch: SwitchInput,
+  select: SelectInput,
+  multi_select: MultiSelectInput,
+  date: DateInput,
+  time: TimeInput,
+  date_range: DateRangeInput,
 }
+
+const FieldRenderer: React.FC<IFieldRendererProps> = ({ field, disabled }) =>
+  FIELDS_RENDERER_REGISTER[field.type]({ field, disabled })
 
 export default FieldRenderer

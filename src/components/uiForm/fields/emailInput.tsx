@@ -1,11 +1,26 @@
-import type { IEditorField } from "@lib/types/form.type"
+import { FormLabel } from "@components/shared/formLabel"
+import type { ICommonFieldElementProps } from "@lib/types/shared.type"
+import { Field, FieldDescription } from "@ui/field"
+import { Input } from "@ui/input"
+import { cn } from "cn"
 
-interface IEmailInputProps {
-  field: IEditorField
-}
-
-const EmailInput: React.FC<IEmailInputProps> = () => {
-  return <>This is the email input</>
+const EmailInput: React.FC<ICommonFieldElementProps> = ({
+  field,
+  disabled,
+}) => {
+  return (
+    <Field className={cn(disabled ? "pointer-events-none" : "")}>
+      <FormLabel htmlFor={field.id} isRequired={field.required}>
+        {field.label}
+      </FormLabel>
+      <Input type="email" id={field.id} placeholder={field.placeholder} />
+      {field.helperText ? (
+        <FieldDescription>{field.helperText}</FieldDescription>
+      ) : (
+        <></>
+      )}
+    </Field>
+  )
 }
 
 export default EmailInput

@@ -27,7 +27,7 @@ const answerCell = (
     .join(", ")
 
 const header = (c: SnapshotField) =>
-  c.type === "datetime" ? `${c.label} (YYYY-MM-DD HH:mm (timezone))` : c.label
+  c.type === "time" ? `${c.label} (YYYY-MM-DD HH:mm (timezone))` : c.label
 
 export const CSV_FORMAT_NOTE =
   "Submitted is UTC ISO 8601. Date time answers read YYYY-MM-DD HH:mm (timezone). Other answers read Other: <text>; a listed option starting with Other: or a backslash gets a leading backslash."

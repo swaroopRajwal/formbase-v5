@@ -48,6 +48,7 @@ const EditorProvider: React.FC<IEditorProviderProps> = ({
   const storeFormData = useEditorStore((state) => state.form)
   const totalFieldsCount = useEditorStore((state) => state.form.fields.length)
   const initForm = useEditorStore((state) => state.initForm)
+  // TODO: newly added fields should be selected by default
   const addNewField = useEditorStore((state) => state.addNewField)
   const deleteField = useEditorStore((state) => state.deleteField)
 

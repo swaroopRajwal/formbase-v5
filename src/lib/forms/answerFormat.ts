@@ -48,7 +48,7 @@ export const formatAnswer = (
   if (typeof value === "boolean") return plain(value ? "Yes" : "No")
   if (typeof value === "object") {
     if (isOther(value)) return [{ text: value.other, other: true }]
-    if (type === "datetime")
+    if (type === "time")
       return plain(formatDateTime(value as DateTimeAnswer))
     const range = value as DateRangeAnswer
     return plain(`${range.start} – ${range.end}`)

@@ -5,6 +5,7 @@ import { FIELDS_META_RECORD } from "@lib/constants/fields"
 import { Button } from "@ui/button"
 import { IconTrash } from "@tabler/icons-react"
 import AppTooltip from "@components/shared/appTooltip"
+import FieldRenderer from "@ui-form/fieldRenderer"
 
 interface IFieldsCanvasProps extends React.ComponentPropsWithoutRef<"div"> {}
 
@@ -44,7 +45,9 @@ const FieldsCanvas: React.FC<IFieldsCanvasProps> = ({
               </AppTooltip>
             </CardAction>
           </CardHeader>
-          <CardContent>This is the {i.type} field</CardContent>
+          <CardContent>
+            <FieldRenderer disabled field={i} />
+          </CardContent>
         </Card>
       ))}
     </div>

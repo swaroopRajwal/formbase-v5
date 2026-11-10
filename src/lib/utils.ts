@@ -1,7 +1,7 @@
-import dayjs from "dayjs"
+import { format } from "date-fns"
 
 export { cn } from "cn"
 
 export const formatDate = (date: Date) => {
-  return dayjs(date).format("DD MMM, YYYY")
+  return format(date, "dd MMM, yyyy")
 }
